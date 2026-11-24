@@ -1,6 +1,6 @@
-// Routier ayarları — Supabase panelinden alın: Project Settings → API
-// Boş bırakılırsa uygulama demo modunda (veriler cihazda) çalışır.
+// Routier ayarları — Supabase: Project Settings → API
+// Not: Bu publishable (herkese açık) anahtardır. Gizli secret/service_role anahtarını ASLA buraya koymayın.
 window.ROUTIER_CONFIG = {
-  supabaseUrl: '',      // ör. 'https://abcdefghijkl.supabase.co'
-  supabaseAnonKey: ''   // 'anon' / 'publishable' anahtar (gizli service_role anahtarını ASLA buraya koymayın)
+  supabaseUrl: 'https://xxelnjtshugciuwttqek.supabase.co',
+  supabaseAnonKey: 'sb_publishable_dEPlmJdBWkubMZ7CakokkA_O79-D5zy'
 };
