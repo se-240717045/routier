@@ -7,7 +7,7 @@ import {
   Eye, EyeOff, Mail, Lock, User, ChevronRight, ChevronUp, ChevronDown, Clock, MapPin, Route,
   Sparkles, Send, Leaf, TrendingDown, Gauge, X, Check, ArrowUp, CornerUpRight, CornerUpLeft,
   LogOut, Bell, Volume2, ShieldCheck, HelpCircle, LocateFixed, Warehouse, Flag, ArrowLeftRight,
-  Wallet, Pencil, AlertTriangle, Info, Mountain, Timer, ArrowRight, Loader2, Wind, Droplet, Cloud, CloudOff,
+  Wallet, Pencil, AlertTriangle, Info, Mountain, Timer, ArrowRight, Loader2, Wind, Droplet, Cloud, CloudOff, RotateCw, RotateCcw, ArrowUpRight, ArrowUpLeft,
 } from 'lucide-react';
 
 /* =========================================================================
@@ -158,82 +158,325 @@ const FUELS = {
 const BRANDS = ['Volkswagen', 'Renault', 'Fiat', 'Toyota', 'Hyundai', 'Ford', 'Honda', 'Togg', 'Tesla', 'BMW', 'Mercedes-Benz', 'Peugeot', 'Opel', 'Dacia', 'Skoda', 'Kia'];
 const YEARS = Array.from({ length: 27 }, (_, i) => 2026 - i);
 
-const START = { name: 'Bostancı, Kadıköy', coord: [29.096, 40.953] };
+/* ----------------------------- Konumlar ----------------------------- */
+const DEMO_ORIGIN = { name: 'Bostancı', sub: 'Kadıköy, İstanbul', coord: [29.096, 40.953] };
+const DEMO_HOME = { name: 'Ev', sub: 'Atatürk Mah., Ataşehir (örnek adres)', coord: [29.1235, 40.9925], demo: true };
+const DEMO_WORK = { name: 'Levent Plaza', sub: 'Büyükdere Cd. No:185, Levent (örnek adres)', coord: [29.0107, 41.081], demo: true };
+const PRESET_PLACES = [
+  { name: 'Taksim Meydanı', sub: 'Beyoğlu, İstanbul', coord: [28.9869, 41.037] },
+  { name: 'Kadıköy İskelesi', sub: 'Kadıköy, İstanbul', coord: [29.0228, 40.9927] },
+  { name: 'Kanyon AVM', sub: 'Levent, Beşiktaş, İstanbul', coord: [29.0109, 41.078] },
+  { name: 'Beşiktaş İskelesi', sub: 'Beşiktaş, İstanbul', coord: [29.007, 41.0422] },
+  { name: 'Üsküdar Meydanı', sub: 'Üsküdar, İstanbul', coord: [29.0153, 41.026] },
+  { name: 'Maslak', sub: 'Sarıyer, İstanbul', coord: [29.0207, 41.1086] },
+  { name: 'Ataşehir Bulvarı', sub: 'Ataşehir, İstanbul', coord: [29.1235, 40.9925] },
+  { name: 'Bostancı Sahil', sub: 'Kadıköy, İstanbul', coord: [29.096, 40.953] },
+  { name: 'Sabiha Gökçen Havalimanı', sub: 'Pendik, İstanbul', coord: [29.3092, 40.8986] },
+  { name: 'İstanbul Havalimanı', sub: 'Arnavutköy, İstanbul', coord: [28.7519, 41.2608] },
+];
+const sameCoord = (a, b) => !!a && !!b && Math.abs(a[0] - b[0]) < 1e-5 && Math.abs(a[1] - b[1]) < 1e-5;
+const trLower = (s) => String(s || '').toLocaleLowerCase('tr-TR');
 
-const DESTINATIONS = {
-  is: {
-    key: 'is', label: 'İş', name: 'Levent Plaza', sub: 'Büyükdere Cd. No:185, Levent', coord: [29.0107, 41.081],
-    routes: [
-      { id: 'eco', title: 'En Ekonomik', tag: 'Routier Eco', via: 'D-100 • 15 Temmuz Köprüsü', min: 37, km: 29.1, factor: 0.84, icon: Leaf },
-      { id: 'fast', title: 'En Hızlı', tag: 'Otoyol', via: 'O-1 • Altunizade', min: 31, km: 28.4, factor: 1.04, icon: Zap },
-      { id: 'scenic', title: 'Alternatif / Manzara', tag: 'Sahil yolu', via: 'Kadıköy • Üsküdar sahili', min: 42, km: 32.0, factor: 0.97, icon: Mountain },
-    ],
-    fallback: {
-      eco: [[29.096, 40.953], [29.085, 40.97], [29.07, 40.985], [29.056, 41.0], [29.05, 41.015], [29.045, 41.03], [29.034, 41.045], [29.02, 41.056], [29.012, 41.067], [29.0107, 41.081]],
-      fast: [[29.096, 40.953], [29.1, 40.97], [29.1, 40.98], [29.088, 40.996], [29.07, 41.01], [29.052, 41.023], [29.04, 41.038], [29.034, 41.045], [29.02, 41.056], [29.012, 41.067], [29.0107, 41.081]],
-      scenic: [[29.096, 40.953], [29.07, 40.966], [29.045, 40.975], [29.027, 40.988], [29.015, 41.01], [29.016, 41.027], [29.03, 41.04], [29.034, 41.045], [29.02, 41.056], [29.012, 41.067], [29.0107, 41.081]],
-    },
-    steps: [
-      { at: 0, icon: ArrowUp, text: 'Bağdat Caddesi boyunca devam edin' },
-      { at: 0.12, icon: CornerUpRight, text: 'Sağa dönün: D-100 bağlantı yolu' },
-      { at: 0.32, icon: ArrowUp, text: 'D-100 üzerinde Avrupa yönüne ilerleyin' },
-      { at: 0.55, icon: ArrowUp, text: '15 Temmuz Şehitler Köprüsü' },
-      { at: 0.72, icon: CornerUpRight, text: 'Zincirlikuyu çıkışından sağa' },
-      { at: 0.88, icon: CornerUpLeft, text: 'Büyükdere Cd. — hedef solda' },
-    ],
-  },
-  ev: {
-    key: 'ev', label: 'Ev', name: 'Ev', sub: 'Atatürk Mah. Ataşehir', coord: [29.1235, 40.9925],
-    routes: [
-      { id: 'eco', title: 'En Ekonomik', tag: 'Routier Eco', via: 'Kayışdağı Cd.', min: 17, km: 9.6, factor: 0.84, icon: Leaf },
-      { id: 'fast', title: 'En Hızlı', tag: 'Otoyol', via: 'O-2 • Kozyatağı', min: 14, km: 9.1, factor: 1.04, icon: Zap },
-      { id: 'scenic', title: 'Alternatif / Manzara', tag: 'Park yolu', via: 'Göztepe Parkı', min: 21, km: 11.4, factor: 0.97, icon: Mountain },
-    ],
-    fallback: {
-      eco: [[29.096, 40.953], [29.104, 40.962], [29.11, 40.972], [29.116, 40.982], [29.1235, 40.9925]],
-      fast: [[29.096, 40.953], [29.1, 40.965], [29.1, 40.978], [29.112, 40.987], [29.1235, 40.9925]],
-      scenic: [[29.096, 40.953], [29.084, 40.968], [29.088, 40.982], [29.105, 40.99], [29.1235, 40.9925]],
-    },
-    steps: [
-      { at: 0, icon: ArrowUp, text: 'Bostancı Köprüsü yönüne devam edin' },
-      { at: 0.25, icon: CornerUpRight, text: 'Sağa dönün: Kayışdağı Caddesi' },
-      { at: 0.6, icon: ArrowUp, text: 'Ataşehir Bulvarı boyunca ilerleyin' },
-      { at: 0.86, icon: CornerUpLeft, text: 'Sola dönün — hedef sağda' },
-    ],
-  },
+/* ----------------------------- Ağ yardımcıları ----------------------------- */
+const PHOTON = 'https://photon.komoot.io';
+const NOMINATIM = 'https://nominatim.openstreetmap.org';
+const OSRM_TABLE = 'https://router.project-osrm.org/table/v1/driving/';
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter'];
+
+async function fetchJSON(url, opts = {}, ms = 9000) {
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const tm = setTimeout(() => { if (ctrl) ctrl.abort(); }, ms);
+  try {
+    const r = await fetch(url, { ...opts, signal: ctrl ? ctrl.signal : undefined });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  } finally {
+    clearTimeout(tm);
+  }
+}
+
+/* ----------------------------- Adres arama (Photon / Nominatim) ----------------------------- */
+function placeFromPhoton(f) {
+  const p = f.properties || {};
+  const street = [p.street, p.housenumber].filter(Boolean).join(' ');
+  const name = p.name || street || p.district || p.city || 'Konum';
+  const parts = [p.name && street ? street : null, p.district || p.locality, p.city || p.county, p.country && p.countrycode !== 'TR' ? p.country : null];
+  const sub = parts.filter((x, i) => x && parts.indexOf(x) === i && x !== name).join(', ');
+  return { name, sub, coord: f.geometry.coordinates };
+}
+async function geocode(q, near) {
+  const params = new URLSearchParams({ q, limit: '8' });
+  if (near) { params.set('lat', String(near[1])); params.set('lon', String(near[0])); }
+  try {
+    const j = await fetchJSON(`${PHOTON}/api/?${params}`, {}, 7000);
+    return { items: (j.features || []).map(placeFromPhoton), offline: false };
+  } catch (e) {
+    try {
+      const j = await fetchJSON(`${NOMINATIM}/search?format=jsonv2&limit=8&accept-language=tr&q=${encodeURIComponent(q)}`, {}, 7000);
+      return {
+        items: j.map((r) => {
+          const bits = String(r.display_name || '').split(',').map((s) => s.trim());
+          return { name: r.name || bits[0], sub: bits.slice(1, 4).join(', '), coord: [Number(r.lon), Number(r.lat)] };
+        }),
+        offline: false,
+      };
+    } catch (e2) {
+      const t = trLower(q);
+      return { items: PRESET_PLACES.filter((p) => trLower(`${p.name} ${p.sub}`).includes(t)), offline: true };
+    }
+  }
+}
+async function reverseGeocode(coord) {
+  try {
+    const j = await fetchJSON(`${PHOTON}/reverse?lat=${coord[1]}&lon=${coord[0]}`, {}, 6000);
+    if (j.features && j.features.length) return { ...placeFromPhoton(j.features[0]), coord };
+  } catch (e) { /* çevrimdışı */ }
+  return { name: 'Seçilen nokta', sub: `${coord[1].toFixed(5)}, ${coord[0].toFixed(5)}`, coord };
+}
+
+/* ----------------------------- Yönlendirme adımları (Türkçe) ----------------------------- */
+const MOD_TR = { uturn: 'U dönüşü yapın', 'sharp right': 'Keskin sağa dönün', right: 'Sağa dönün', 'slight right': 'Hafif sağa yönelin', straight: 'Düz devam edin', 'slight left': 'Hafif sola yönelin', left: 'Sola dönün', 'sharp left': 'Keskin sola dönün' };
+const MOD_ICON = { uturn: RotateCcw, 'sharp right': CornerUpRight, right: CornerUpRight, 'slight right': ArrowUpRight, straight: ArrowUp, 'slight left': ArrowUpLeft, left: CornerUpLeft, 'sharp left': CornerUpLeft };
+function describeStep(s, legIndex, legCount) {
+  const m = s.maneuver || {};
+  const name = s.name || s.ref || '';
+  const on = name ? `: ${name}` : '';
+  const mod = m.modifier || 'straight';
+  const left = mod.includes('left');
+  switch (m.type) {
+    case 'depart': return { icon: ArrowUp, text: name ? `${name} boyunca ilerleyin` : 'Rotaya başlayın' };
+    case 'arrive': return legIndex < legCount - 1 ? { icon: Flag, text: 'Durağa varıyorsunuz', stopArrive: true } : { icon: Flag, text: 'Hedefinize varıyorsunuz', arrive: true };
+    case 'roundabout': case 'rotary': return { icon: RotateCw, text: `Döner kavşaktan ${m.exit || 1}. çıkışı kullanın${on}` };
+    case 'exit roundabout': case 'exit rotary': return { icon: ArrowUpRight, text: `Döner kavşaktan çıkın${on}` };
+    case 'merge': return { icon: left ? ArrowUpLeft : ArrowUpRight, text: `Yola katılın${on}` };
+    case 'on ramp': return { icon: MOD_ICON[mod] || ArrowUpRight, text: `Bağlantı yoluna girin${on}` };
+    case 'off ramp': return { icon: MOD_ICON[mod] || ArrowUpRight, text: `${left ? 'Soldaki' : 'Sağdaki'} çıkışı kullanın${on}` };
+    case 'fork': return { icon: left ? ArrowUpLeft : ArrowUpRight, text: `Yol ayrımında ${left ? 'soldan' : 'sağdan'} devam edin${on}` };
+    case 'continue': case 'new name': case 'notification':
+      return { icon: MOD_ICON[mod] || ArrowUp, text: mod === 'straight' || !MOD_TR[mod] ? `Devam edin${on}` : `${MOD_TR[mod]}${on}` };
+    default: return { icon: MOD_ICON[mod] || ArrowUp, text: `${MOD_TR[mod] || 'Devam edin'}${on}` };
+  }
+}
+
+/* ----------------------------- Rota adayları ----------------------------- */
+function candidateFromOsrm(r, noMotorway) {
+  const steps = [];
+  let acc = 0;
+  r.legs.forEach((leg, li) => leg.steps.forEach((s) => {
+    steps.push({ startDist: acc, dist: s.distance, dur: s.duration, ...describeStep(s, li, r.legs.length) });
+    acc += s.distance;
+  }));
+  const total = r.distance || acc || 1;
+  return {
+    coords: r.geometry.coordinates,
+    distance: r.distance,
+    duration: r.duration,
+    steps: steps.map((s) => ({ ...s, at: Math.min(1, s.startDist / total) })),
+    summary: r.legs.map((l) => l.summary).filter(Boolean).join(' • '),
+    noMotorway,
+    source: 'osrm',
+  };
+}
+async function osrmCandidates(points, { alternatives = false, exclude = null } = {}) {
+  const path = points.map(([x, y]) => `${x.toFixed(6)},${y.toFixed(6)}`).join(';');
+  const p = new URLSearchParams({ overview: 'full', geometries: 'geojson', steps: 'true' });
+  if (alternatives && points.length === 2) p.set('alternatives', '3');
+  if (exclude) p.set('exclude', exclude);
+  const j = await fetchJSON(`${OSRM}${path}?${p}`, {}, 10000);
+  if (j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error(j.code || 'NoRoute');
+  return j.routes.map((r) => candidateFromOsrm(r, !!exclude));
+}
+// Ağ yoksa: noktalar arasında kavisli tahmini rotalar
+function synthCandidates(points) {
+  const variants = [{ k: 0.08, v: 42, ex: false }, { k: -0.14, v: 50, ex: false }, { k: 0.22, v: 36, ex: true }];
+  return variants.map(({ k, v, ex }) => {
+    let coords = [];
+    const legEnds = [];
+    for (let i = 0; i < points.length - 1; i += 1) {
+      const a = points[i];
+      const b = points[i + 1];
+      const c = [(a[0] + b[0]) / 2 - (b[1] - a[1]) * k, (a[1] + b[1]) / 2 + (b[0] - a[0]) * k];
+      const seg = [];
+      for (let s = 0; s <= 24; s += 1) {
+        const t = s / 24;
+        const u = 1 - t;
+        seg.push([u * u * a[0] + 2 * u * t * c[0] + t * t * b[0], u * u * a[1] + 2 * u * t * c[1] + t * t * b[1]]);
+      }
+      coords = coords.concat(i ? seg.slice(1) : seg);
+      legEnds.push(coords.length - 1);
+    }
+    const cum = [0];
+    for (let i = 1; i < coords.length; i += 1) cum.push(cum[i - 1] + distM(coords[i - 1], coords[i]));
+    const distance = cum[cum.length - 1] * 1.08;
+    const steps = [{ at: 0, dist: 0, dur: 0, icon: ArrowUp, text: 'Rotaya başlayın' }, { at: 0.5, dist: 0, dur: 0, icon: ArrowUp, text: 'Rota boyunca devam edin' }];
+    legEnds.slice(0, -1).forEach((idx) => steps.push({ at: cum[idx] / cum[cum.length - 1], icon: Flag, text: 'Durağa varıyorsunuz', stopArrive: true }));
+    steps.push({ at: 1, icon: Flag, text: 'Hedefinize varıyorsunuz', arrive: true });
+    steps.sort((x, y) => x.at - y.at);
+    return { coords, distance, duration: distance / (v / 3.6), steps, summary: '', noMotorway: ex, source: 'offline' };
+  });
+}
+// Varsayılan demo rotası (çevrimdışı önizleme için elle çizilmiş)
+const DEMO_STEPS = [
+  { at: 0, icon: ArrowUp, text: 'Bağdat Caddesi boyunca ilerleyin' },
+  { at: 0.12, icon: CornerUpRight, text: 'Sağa dönün: D-100 bağlantı yolu' },
+  { at: 0.32, icon: ArrowUp, text: 'D-100 üzerinde Avrupa yönüne devam edin' },
+  { at: 0.55, icon: ArrowUp, text: 'Devam edin: 15 Temmuz Şehitler Köprüsü' },
+  { at: 0.72, icon: CornerUpRight, text: 'Sağdaki çıkışı kullanın: Zincirlikuyu' },
+  { at: 0.88, icon: CornerUpLeft, text: 'Sola dönün: Büyükdere Caddesi' },
+  { at: 1, icon: Flag, text: 'Hedefinize varıyorsunuz', arrive: true },
+];
+const DEMO_CANDIDATES = [
+  { role: 'eco', factor: 0.84, distance: 29100, duration: 37 * 60, summary: 'D-100 • 15 Temmuz Köprüsü', coords: [[29.096, 40.953], [29.085, 40.97], [29.07, 40.985], [29.056, 41.0], [29.05, 41.015], [29.045, 41.03], [29.034, 41.045], [29.02, 41.056], [29.012, 41.067], [29.0107, 41.081]] },
+  { role: 'fast', factor: 1.04, distance: 28400, duration: 31 * 60, summary: 'O-1 • Altunizade', coords: [[29.096, 40.953], [29.1, 40.97], [29.1, 40.98], [29.088, 40.996], [29.07, 41.01], [29.052, 41.023], [29.04, 41.038], [29.034, 41.045], [29.02, 41.056], [29.012, 41.067], [29.0107, 41.081]] },
+  { role: 'scenic', factor: 0.97, distance: 32000, duration: 42 * 60, summary: 'Kadıköy • Üsküdar sahili', coords: [[29.096, 40.953], [29.07, 40.966], [29.045, 40.975], [29.027, 40.988], [29.015, 41.01], [29.016, 41.027], [29.03, 41.04], [29.034, 41.045], [29.02, 41.056], [29.012, 41.067], [29.0107, 41.081]] },
+].map((c) => ({ ...c, coords: chaikin(c.coords, 3), steps: DEMO_STEPS, source: 'demo' }));
+
+/* Ortalama hıza göre tüketim çarpanı: içten yanmalı ~65 km/s, elektrikli ~35 km/s civarında en verimli */
+function speedFactor(v, ev) {
+  const f = ev ? 0.85 + 0.00008 * (v - 35) ** 2 : 0.9 + 0.00012 * (v - 65) ** 2;
+  return clamp(f, 0.82, 1.5);
+}
+const ROUTE_META = {
+  eco: { title: 'En Ekonomik', tag: 'Routier Eco', icon: Leaf },
+  fast: { title: 'En Hızlı', tag: 'En kısa süre', icon: Zap },
+  scenic: { title: 'Alternatif / Manzara', tag: 'Alternatif', icon: Mountain },
 };
+function classifyRoutes(cands, ev) {
+  if (!cands || !cands.length) return [];
+  const mk = (c, id, factor, same) => ({
+    id,
+    ...ROUTE_META[id],
+    tag: id === 'scenic' && c.noMotorway ? 'Otoyolsuz' : ROUTE_META[id].tag,
+    via: c.summary || (c.noMotorway ? 'Şehir içi yollar' : 'Önerilen yol'),
+    min: Math.max(1, Math.round(c.duration / 60)),
+    km: Math.max(0.1, Math.round(c.distance / 100) / 10),
+    factor,
+    avgSpeed: (c.distance / 1000) / Math.max(c.duration / 3600, 1e-3),
+    coords: c.coords,
+    steps: c.steps,
+    source: c.source,
+    sameAsFast: !!same,
+  });
+  if (cands[0].role) return cands.map((c) => mk(c, c.role, c.factor, false));
+  const uniq = [];
+  cands.forEach((c) => {
+    if (!uniq.some((u) => Math.abs(u.distance - c.distance) / Math.max(u.distance, 1) < 0.015 && Math.abs(u.duration - c.duration) / Math.max(u.duration, 1) < 0.02)) uniq.push(c);
+  });
+  const rich = uniq.map((c) => {
+    const km = c.distance / 1000;
+    const v = km / Math.max(c.duration / 3600, 1e-3);
+    const f = speedFactor(v, ev);
+    return { ...c, f, fuel: km * f };
+  });
+  const fast = rich.reduce((a, b) => (b.duration < a.duration ? b : a));
+  const eco = rich.reduce((a, b) => (b.fuel < a.fuel ? b : a));
+  const rest = rich.filter((c) => c !== fast && c !== eco);
+  const scenic = rest.find((c) => c.noMotorway) || rest.sort((a, b) => b.distance - a.distance)[0] || null;
+  const out = [mk(eco, 'eco', eco.f, eco === fast), mk(fast, 'fast', fast.f, false)];
+  if (scenic) out.push(mk(scenic, 'scenic', scenic.f, false));
+  return out;
+}
 
-// Yedek rota geometrilerinin köşelerini yumuşat (keskin dönüş yerine kavisli yol)
-Object.values(DESTINATIONS).forEach((d) => {
-  Object.keys(d.fallback).forEach((k) => { d.fallback[k] = chaikin(d.fallback[k], 3); });
-});
-
-const POIS = {
-  fuel: {
-    title: 'Yakındaki En Ucuz Benzinlikler', icon: Fuel,
-    items: [
-      { name: 'Opet - Atatürk Bulvarı', meta: '43,80 ₺/L • 1,2 km', detour: 2, best: true },
-      { name: 'Petrol Ofisi - Bağdat Cd.', meta: '44,05 ₺/L • 2,0 km', detour: 3 },
-      { name: 'Shell - Kozyatağı', meta: '44,35 ₺/L • 2,6 km', detour: 4 },
-    ],
-  },
-  cafe: {
-    title: 'Rota Üzerindeki Kafeler', icon: Coffee,
-    items: [
-      { name: 'Kahve Dünyası - Suadiye', meta: '4,6 ★ • 0,8 km', detour: 3, best: true },
-      { name: 'Petra Roasting - Moda', meta: '4,8 ★ • 3,4 km', detour: 6 },
-      { name: 'Starbucks - Altunizade', meta: '4,3 ★ • rota üstü', detour: 2 },
-    ],
-  },
-  charge: {
-    title: 'Şarj İstasyonları', icon: Zap,
-    items: [
-      { name: 'ZES - Bostancı Sahil', meta: '180 kW DC • 8,90 ₺/kWh', detour: 2, best: true },
-      { name: 'Eşarj - Kozyatağı AVM', meta: '120 kW DC • 9,40 ₺/kWh', detour: 4 },
-      { name: 'Trugo - Acıbadem', meta: '300 kW DC • 9,99 ₺/kWh', detour: 5 },
-    ],
-  },
+/* ----------------------------- Rota üzerindeki duraklar (Overpass + OSRM table) ----------------------------- */
+const POI_KINDS = {
+  fuel: { title: 'Rotadaki Benzinlikler', tag: 'fuel', radius: 700, icon: Fuel, label: 'Akaryakıt istasyonu', demo: ['Opet', 'Petrol Ofisi', 'Shell', 'BP', 'Total'] },
+  cafe: { title: 'Rotadaki Kafeler', tag: 'cafe', radius: 400, icon: Coffee, label: 'Kafe', demo: ['Kahve Dünyası', 'Starbucks', 'Espressolab', 'Simit Sarayı', 'Gloria Jean\'s'] },
+  charge: { title: 'Rotadaki Şarj İstasyonları', tag: 'charging_station', radius: 1200, icon: Zap, label: 'Şarj istasyonu', demo: ['ZES', 'Eşarj', 'Trugo', 'Voltrun', 'Sharz.net'] },
 };
+function sampleLine(coords, n) {
+  if (coords.length <= n) return coords;
+  const step = (coords.length - 1) / (n - 1);
+  return Array.from({ length: n }, (_, i) => coords[Math.round(i * step)]);
+}
+function distToLine(p, line) {
+  const kx = 111320 * Math.cos(toRad(p[1]));
+  const ky = 110540;
+  let best = Infinity;
+  for (let i = 0; i < line.length - 1; i += 1) {
+    const ax = (line[i][0] - p[0]) * kx; const ay = (line[i][1] - p[1]) * ky;
+    const bx = (line[i + 1][0] - p[0]) * kx; const by = (line[i + 1][1] - p[1]) * ky;
+    const dx = bx - ax; const dy = by - ay;
+    const L = dx * dx + dy * dy;
+    const t = L ? clamp(-(ax * dx + ay * dy) / L, 0, 1) : 0;
+    best = Math.min(best, Math.hypot(ax + t * dx, ay + t * dy));
+  }
+  return best;
+}
+function poiName(tags, K) {
+  return tags.name || tags.brand || tags.operator || K.label;
+}
+function poiSub(tags, kind) {
+  const bits = [];
+  if (tags.brand && tags.name && tags.brand !== tags.name) bits.push(tags.brand);
+  if (kind === 'fuel') {
+    if (tags['fuel:lpg'] === 'yes') bits.push('LPG var');
+    if (tags['fuel:diesel'] === 'yes') bits.push('Dizel');
+  }
+  if (kind === 'charge') {
+    if (tags.operator && tags.operator !== tags.name) bits.push(tags.operator);
+    if (tags.capacity) bits.push(`${tags.capacity} soket`);
+  }
+  if (tags['addr:street']) bits.push(tags['addr:street']);
+  if (tags.opening_hours === '24/7') bits.push('7/24 açık');
+  return bits.join(' • ');
+}
+async function findStops(kind, baseCoords, from, to) {
+  const K = POI_KINDS[kind];
+  const sample = sampleLine(baseCoords, 40);
+  try {
+    const line = sample.map(([x, y]) => `${y.toFixed(5)},${x.toFixed(5)}`).join(',');
+    const q = `[out:json][timeout:20];(node["amenity"="${K.tag}"](around:${K.radius},${line});way["amenity"="${K.tag}"](around:${K.radius},${line}););out center 80;`;
+    let els = null;
+    for (let i = 0; i < OVERPASS.length && !els; i += 1) {
+      try {
+        const j = await fetchJSON(OVERPASS[i], { method: 'POST', body: `data=${encodeURIComponent(q)}`, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }, 20000);
+        els = j.elements || [];
+      } catch (e) { /* sıradaki sunucu */ }
+    }
+    if (!els) throw new Error('overpass');
+    const ranked = els
+      .map((e) => ({ coord: [e.lon ?? (e.center && e.center.lon), e.lat ?? (e.center && e.center.lat)], tags: e.tags || {} }))
+      .filter((p) => p.coord[0] != null)
+      .map((p) => ({ ...p, off: distToLine(p.coord, sample) }))
+      .sort((a, b) => a.off - b.off)
+      .slice(0, 12);
+    if (!ranked.length) return { items: [], offline: false };
+    // Sapma = (başlangıç→durak) + (durak→varış) − (başlangıç→varış), gerçek yol ağı üzerinden
+    try {
+      const all = [from, to, ...ranked.map((p) => p.coord)];
+      const idx = ranked.map((_, i) => i + 2);
+      const url = `${OSRM_TABLE}${all.map((c) => `${c[0].toFixed(6)},${c[1].toFixed(6)}`).join(';')}?sources=${[0, ...idx].join(';')}&destinations=${[1, ...idx].join(';')}&annotations=distance,duration`;
+      const t = await fetchJSON(url, {}, 12000);
+      ranked.forEach((p, i) => {
+        const k = i + 1;
+        const D = t.distances; const T = t.durations;
+        if (D[0][k] == null || D[k][0] == null) { p.addKm = Infinity; return; }
+        p.addKm = Math.max(0, (D[0][k] + D[k][0] - D[0][0]) / 1000);
+        p.addMin = Math.max(0, (T[0][k] + T[k][0] - T[0][0]) / 60);
+        p.fromStartKm = D[0][k] / 1000;
+      });
+    } catch (e) {
+      ranked.forEach((p) => { p.addKm = (p.off * 2.6) / 1000; p.addMin = (p.addKm / 30) * 60; });
+    }
+    return {
+      items: ranked.filter((p) => Number.isFinite(p.addKm)).sort((a, b) => a.addKm - b.addKm).slice(0, 6)
+        .map((p) => ({ name: poiName(p.tags, K), sub: poiSub(p.tags, kind), coord: p.coord, kind, addKm: p.addKm, addMin: p.addMin, fromStartKm: p.fromStartKm })),
+      offline: false,
+    };
+  } catch (e) {
+    // Çevrimdışı önizleme: rota boyunca örnek duraklar
+    const lineM = makeLine(baseCoords);
+    const items = [0.28, 0.5, 0.7].map((f, i) => {
+      const a = lineM.atDist(lineM.total * f);
+      const b = lineM.atDist(lineM.total * f + 60);
+      const off = 120 + i * 140;
+      const coord = offsetPoint(a, (bearingOf(a, b) + 90) % 360, off);
+      const addKm = (off * 2.4) / 1000;
+      return { name: `${K.demo[i]} (örnek)`, sub: 'Çevrimdışı örnek durak', coord, kind, addKm, addMin: (addKm / 28) * 60, fromStartKm: (lineM.total * f) / 1000 };
+    }).sort((x, y) => x.addKm - y.addKm);
+    return { items, offline: true };
+  }
+}
 
 const WEEK = [
   { d: 'Pzt', v: 142 }, { d: 'Sal', v: 96 }, { d: 'Çar', v: 188 }, { d: 'Per', v: 121 },
@@ -319,13 +562,23 @@ function AppleLogo() {
     </svg>
   );
 }
-function RoutierMark({ size = 28 }) {
+/* Routier logosu (vektör) */
+const LOGO_ORANGE = '#FF8560';
+const LOGO_INK = '#23262B';
+const LOGO_MARK_D = 'M9035 24910 c-380 -24 -1007 -95 -1092 -125 -7 -2 -81 -16 -165 -30 -84 -15 -223 -44 -308 -66 -85 -21 -195 -48 -245 -59 -49 -11 -133 -33 -185 -50 -52 -16 -149 -45 -215 -65 -156 -47 -443 -147 -570 -197 -55 -22 -131 -53 -170 -68 -322 -127 -875 -403 -1150 -574 -55 -34 -126 -77 -158 -94 -32 -18 -109 -67 -172 -110 -63 -42 -129 -86 -145 -97 -17 -11 -70 -49 -118 -84 -48 -35 -123 -89 -167 -119 -201 -140 -513 -394 -660 -538 -33 -32 -125 -118 -205 -190 -136 -123 -230 -217 -325 -324 -22 -25 -89 -100 -150 -166 -214 -235 -353 -398 -427 -503 -29 -41 -78 -104 -108 -141 -30 -37 -82 -108 -115 -156 -90 -133 -241 -364 -268 -409 -190 -318 -262 -447 -390 -695 -38 -74 -73 -139 -77 -145 -4 -5 -31 -64 -60 -130 -28 -66 -55 -124 -59 -130 -4 -5 -15 -28 -24 -50 -9 -22 -55 -134 -102 -250 -145 -352 -355 -1016 -410 -1295 -8 -41 -24 -113 -36 -160 -11 -47 -26 -125 -34 -174 -8 -49 -21 -119 -29 -155 -118 -526 -171 -1604 -107 -2191 33 -309 111 -840 158 -1070 88 -437 95 -467 158 -700 152 -563 231 -811 382 -1200 25 -63 64 -166 88 -227 24 -62 60 -148 79 -191 20 -44 36 -82 36 -86 0 -3 40 -101 90 -217 49 -115 90 -213 90 -218 0 -4 16 -37 35 -73 19 -36 48 -101 65 -144 17 -43 112 -242 211 -442 98 -200 179 -364 179 -366 0 -9 302 -571 332 -617 20 -31 73 -125 117 -208 45 -84 92 -169 105 -189 13 -20 51 -91 86 -157 35 -66 76 -138 91 -160 74 -110 74 -174 -1 -390 -67 -192 -195 -782 -220 -1015 -6 -58 -13 -114 -15 -125 -50 -239 -52 -1000 -5 -1410 6 -44 14 -124 20 -177 9 -93 57 -357 118 -653 32 -155 125 -495 177 -650 52 -151 130 -372 158 -445 95 -250 281 -654 400 -872 46 -84 112 -207 147 -273 35 -66 84 -149 109 -185 25 -36 76 -118 113 -182 169 -295 448 -664 448 -593 0 7 -141 389 -180 490 -72 183 -131 366 -245 760 -53 183 -68 240 -82 310 -6 28 -29 127 -52 220 -50 205 -88 390 -136 670 -46 264 -53 325 -106 845 -40 407 3 1318 80 1693 11 50 29 148 41 217 12 69 38 186 57 260 19 74 48 185 63 245 15 61 43 155 63 210 140 398 147 417 224 585 57 125 199 399 238 460 23 36 64 103 90 150 75 134 231 354 460 647 226 290 573 645 840 858 27 22 79 67 115 99 199 180 389 323 790 590 364 242 487 320 760 481 204 121 266 158 320 195 30 21 83 51 117 68 34 18 106 58 160 90 54 33 127 74 163 92 36 18 162 88 280 155 118 67 285 160 370 207 85 47 184 103 220 126 36 22 125 78 198 124 241 150 828 545 902 607 25 20 61 48 80 61 19 13 55 41 80 61 25 21 83 68 130 105 409 327 711 674 977 1124 196 330 328 911 299 1310 -4 47 -11 146 -16 220 -9 133 -41 309 -81 445 -11 39 -27 95 -36 125 -17 62 -49 130 -62 130 -16 0 -18 -14 -52 -342 -85 -831 -442 -1453 -1134 -1978 -60 -46 -132 -102 -160 -125 -27 -23 -75 -57 -105 -76 -30 -18 -109 -70 -175 -114 -118 -79 -321 -205 -332 -205 -3 0 -37 -20 -77 -44 -64 -39 -324 -177 -466 -247 -30 -15 -140 -70 -245 -122 -104 -52 -224 -109 -265 -126 -41 -17 -106 -47 -145 -66 -85 -42 -265 -125 -270 -125 -3 0 -158 -72 -345 -160 -187 -88 -342 -160 -345 -160 -2 0 -76 -34 -165 -75 -174 -81 -189 -84 -235 -57 -37 23 -348 347 -401 417 -21 28 -54 68 -73 90 -130 144 -424 635 -516 860 -29 72 -63 152 -75 179 -34 80 -90 254 -111 346 -20 85 -34 151 -70 329 -178 863 65 2009 583 2755 40 58 88 127 106 153 32 46 55 76 215 268 172 208 540 532 750 661 51 31 114 73 142 93 76 55 325 183 528 271 167 72 452 162 648 204 600 130 1279 108 1849 -59 328 -97 607 -204 764 -293 66 -39 144 -81 171 -96 28 -14 88 -52 135 -85 47 -33 117 -82 155 -110 532 -373 998 -980 1297 -1690 46 -110 188 -529 188 -556 0 -10 18 -93 41 -184 86 -351 134 -733 154 -1231 16 -384 -47 -990 -141 -1355 -12 -49 -36 -142 -53 -206 -47 -183 -158 -511 -216 -634 -7 -16 -34 -82 -58 -145 -24 -64 -62 -149 -84 -190 -22 -41 -80 -151 -128 -243 -48 -93 -134 -239 -192 -325 -58 -87 -126 -191 -152 -232 -66 -105 -273 -380 -521 -694 -82 -103 -134 -165 -235 -279 -44 -50 -114 -129 -155 -176 -849 -962 -1086 -1503 -990 -2264 65 -521 345 -990 833 -1395 37 -32 91 -76 120 -100 302 -251 950 -569 1507 -738 80 -24 174 -54 210 -65 83 -27 351 -95 410 -104 25 -4 99 -20 165 -36 230 -55 414 -80 459 -63 36 14 252 309 503 684 93 140 188 282 210 315 49 73 283 436 386 600 42 66 93 145 114 175 41 58 118 181 241 385 40 66 96 156 124 200 52 82 141 237 233 405 28 52 85 151 127 220 100 166 318 555 420 750 76 144 215 412 282 545 67 131 306 631 306 639 0 4 22 52 50 109 27 56 67 145 88 197 22 52 61 145 86 205 26 61 70 164 97 230 28 66 64 149 79 185 105 238 365 982 406 1160 8 36 28 108 44 160 33 111 98 374 135 545 14 66 34 152 45 190 21 76 31 127 85 454 20 118 38 218 40 222 7 11 43 311 62 524 26 285 26 1121 0 1405 -22 243 -93 772 -121 905 -8 39 -22 115 -31 170 -9 55 -23 120 -30 145 -8 25 -21 81 -29 125 -23 121 -81 342 -136 515 -27 85 -58 182 -68 215 -32 98 -168 465 -197 530 -14 33 -42 101 -60 150 -184 499 -771 1521 -1111 1935 -29 36 -99 121 -154 190 -179 222 -240 293 -358 420 -249 265 -732 722 -915 863 -34 27 -87 70 -117 96 -100 87 -423 325 -575 425 -82 54 -168 111 -190 126 -165 113 -548 327 -875 487 -406 201 -690 314 -1160 464 -323 104 -372 118 -525 154 -82 19 -184 44 -225 55 -122 31 -410 88 -485 95 -38 3 -99 12 -135 20 -360 77 -1318 126 -1835 95z M17316 24798 c-22 -59 -63 -187 -92 -287 -154 -528 -300 -668 -879 -851 -191 -60 -220 -72 -223 -98 -4 -28 18 -38 323 -143 523 -181 624 -290 803 -864 84 -273 116 -310 152 -177 36 132 177 506 222 588 140 257 226 314 738 489 289 99 291 106 44 189 -607 206 -755 332 -878 751 -31 106 -121 380 -141 428 -14 34 -52 21 -69 -25z M10979 12800 c-30 -22 -72 -60 -94 -83 -46 -49 -169 -152 -260 -218 -35 -25 -85 -64 -111 -86 -90 -75 -657 -501 -859 -646 -77 -55 -169 -124 -205 -152 -36 -28 -103 -77 -150 -109 -78 -52 -182 -126 -304 -216 -26 -19 -71 -52 -99 -73 -29 -20 -72 -53 -97 -72 -25 -19 -103 -77 -175 -130 -184 -135 -357 -269 -445 -345 -41 -36 -100 -85 -130 -110 -30 -24 -100 -87 -155 -139 -55 -53 -127 -121 -160 -152 -439 -407 -830 -930 -1063 -1419 -40 -85 -82 -171 -92 -191 -46 -85 -188 -489 -216 -614 -9 -38 -20 -78 -25 -87 -20 -37 -86 -363 -98 -485 -6 -54 -18 -154 -27 -223 -89 -712 72 -1749 394 -2530 17 -41 55 -138 85 -215 64 -164 211 -489 263 -584 20 -36 66 -122 102 -191 150 -290 396 -724 468 -825 23 -33 68 -105 99 -160 32 -55 76 -124 99 -155 22 -30 64 -89 91 -130 105 -155 326 -459 520 -715 66 -87 140 -185 164 -219 24 -34 63 -83 87 -109 24 -26 64 -78 90 -115 61 -86 179 -232 319 -397 61 -71 151 -182 199 -245 98 -127 216 -254 258 -276 43 -22 82 1 173 101 44 48 112 122 151 164 39 42 111 123 159 181 84 100 190 221 390 443 50 55 132 150 183 211 52 61 145 170 207 241 134 153 447 521 490 575 17 21 86 104 154 185 68 81 160 193 205 248 45 55 118 145 163 201 45 55 123 155 174 221 51 66 117 149 149 185 31 36 84 103 118 150 35 47 83 109 107 138 70 82 53 133 -55 167 -14 4 -75 31 -135 60 -61 29 -144 67 -185 85 -124 54 -662 342 -731 391 -15 10 -37 23 -50 28 -54 22 -484 300 -682 442 -147 105 -213 154 -377 280 -948 734 -1652 1776 -1799 2665 -43 261 -46 298 -45 544 2 469 74 828 252 1240 131 306 379 735 550 952 31 40 70 91 86 113 94 128 716 813 975 1075 187 188 398 413 441 470 18 25 61 74 95 110 33 36 78 88 100 115 21 28 56 68 76 90 42 45 177 231 227 313 52 85 43 92 -39 32z';
+const LOGO_WORD_D = 'M23925 7849 c-480 -47 -796 -377 -795 -833 1 -456 314 -764 831 -817 547 -56 989 316 989 832 0 441 -322 778 -782 819 -124 11 -116 11 -243 -1z M563 7050 c-12 -5 -26 -18 -32 -29 -15 -27 -15 -6380 -1 -6433 6 -20 18 -39 28 -43 26 -12 867 -18 1191 -10 258 7 285 9 302 26 18 18 19 51 19 902 0 844 1 885 18 900 30 28 1203 25 1248 -2 18 -11 74 -80 130 -161 54 -77 124 -176 154 -218 57 -78 116 -162 247 -352 40 -58 91 -132 114 -165 23 -33 65 -91 94 -130 29 -38 104 -146 168 -240 64 -93 148 -215 187 -270 39 -55 96 -137 126 -182 38 -55 66 -86 87 -95 26 -10 185 -13 813 -13 813 0 814 0 814 40 0 13 -109 179 -250 380 -46 66 -107 154 -136 195 -214 312 -421 613 -579 840 -33 47 -87 126 -122 175 -124 179 -159 230 -228 324 -138 188 -138 194 4 256 184 80 414 247 600 435 313 315 510 710 578 1155 26 171 26 622 0 780 -103 626 -438 1157 -942 1492 -351 233 -832 390 -1335 434 -169 15 -3263 24 -3297 9z m3044 -1243 c270 -36 411 -84 580 -195 176 -115 329 -337 390 -562 40 -152 41 -471 1 -621 -63 -232 -197 -434 -382 -573 -132 -99 -342 -183 -556 -222 -150 -28 -1528 -34 -1552 -7 -28 31 -31 2152 -3 2183 l19 21 691 -4 c561 -3 713 -7 812 -20z M19575 6781 c-45 -19 -44 -10 -47 -629 -3 -538 -5 -593 -20 -608 -15 -15 -54 -17 -357 -20 -209 -2 -349 -7 -361 -14 -29 -16 -31 -56 -28 -602 3 -471 4 -509 21 -525 16 -16 49 -18 373 -23 276 -4 357 -8 363 -18 12 -20 20 -1333 11 -1777 -15 -649 18 -880 171 -1203 134 -284 334 -496 616 -652 581 -321 1527 -336 2139 -33 180 88 179 83 103 295 -28 79 -79 222 -114 318 -34 96 -87 245 -117 330 -82 232 -75 227 -196 165 -494 -252 -987 -128 -1108 280 -26 86 -35 2232 -9 2271 l15 24 611 2 c591 3 611 4 625 22 21 29 21 1093 0 1122 -14 18 -35 19 -619 24 -577 5 -606 6 -626 24 -21 19 -21 22 -21 601 0 657 6 614 -81 625 -79 10 -1320 11 -1344 1z M9240 5639 c-160 -10 -360 -37 -485 -65 -74 -17 -311 -89 -407 -123 -101 -37 -329 -155 -452 -236 -576 -374 -900 -826 -1074 -1495 -92 -352 -110 -625 -66 -1019 37 -337 164 -704 355 -1026 303 -509 857 -911 1509 -1094 41 -12 98 -28 125 -36 314 -90 997 -110 1370 -40 276 52 675 201 925 347 573 332 990 880 1139 1493 12 50 29 117 37 150 65 254 69 789 8 1055 -8 35 -22 97 -30 137 -189 914 -948 1652 -1944 1888 -251 60 -663 86 -1010 64z m505 -1229 c669 -128 1055 -679 1022 -1460 -11 -246 -47 -387 -152 -588 -227 -435 -623 -677 -1105 -675 -756 3 -1248 501 -1277 1293 -17 463 91 814 327 1064 153 161 280 242 495 314 245 81 453 97 690 52z M28048 5640 c-58 -4 -130 -13 -160 -19 -29 -5 -89 -15 -133 -22 -180 -26 -495 -129 -693 -227 -591 -294 -1003 -747 -1212 -1333 -71 -199 -82 -232 -102 -314 -101 -418 -103 -878 -6 -1315 72 -327 279 -735 507 -1000 102 -119 119 -136 241 -242 379 -329 891 -566 1435 -662 410 -72 1135 -54 1441 37 575 170 818 299 1182 625 89 80 117 121 106 154 -14 47 -753 798 -784 798 -13 0 -48 -19 -79 -42 -383 -290 -753 -418 -1207 -418 -630 0 -1088 248 -1319 715 -73 147 -85 193 -60 218 15 16 159 17 1871 17 1191 0 1862 4 1874 10 30 16 38 59 51 277 18 301 -9 667 -61 828 -5 17 -23 84 -40 150 -193 751 -805 1391 -1555 1625 -38 12 -95 30 -125 40 -260 88 -774 131 -1172 100z m481 -1106 c386 -56 633 -187 824 -437 127 -165 247 -470 213 -539 l-12 -23 -1167 -3 c-794 -1 -1174 1 -1188 8 -38 21 -18 120 63 312 130 308 346 512 648 615 218 73 424 96 619 67z M34585 5610 c-404 -48 -843 -260 -1142 -552 -128 -125 -131 -120 -132 242 -1 124 -5 230 -9 237 -19 31 -70 33 -707 33 -618 0 -644 -1 -666 -19 l-24 -19 -3 -2475 c-2 -2428 -2 -2475 17 -2498 l19 -24 684 -3 c458 -3 692 0 710 7 48 18 48 12 48 1233 0 1182 4 1317 41 1508 106 543 384 824 957 970 166 42 296 54 494 47 189 -7 197 -5 199 61 8 379 -4 1239 -18 1254 -22 24 -259 23 -468 -2z M13148 5561 c-26 -4 -51 -10 -55 -15 -4 -4 -8 -701 -8 -1549 1 -1690 2 -1733 65 -2027 46 -213 149 -460 262 -631 283 -427 742 -715 1318 -829 285 -56 720 -56 944 1 374 95 716 269 938 477 150 140 148 143 148 -184 0 -222 1 -232 21 -250 34 -31 1315 -23 1342 8 24 28 27 4950 3 4984 -14 18 -35 19 -698 22 -720 3 -750 2 -762 -41 -3 -12 -6 -602 -6 -1312 0 -1396 -1 -1433 -55 -1637 -69 -268 -233 -513 -431 -647 -212 -142 -392 -189 -684 -178 -496 19 -794 279 -902 787 l-22 105 -6 1447 c-3 795 -8 1449 -12 1453 -3 4 -24 11 -45 16 -43 10 -1283 10 -1355 0z M23330 5559 c-13 -6 -28 -15 -32 -22 -4 -7 -8 -1124 -8 -2483 l0 -2471 23 -21 23 -22 685 -3 c376 -1 696 1 711 5 18 6 30 18 37 40 7 23 10 780 8 2490 -2 2344 -3 2458 -20 2475 -21 21 -1376 32 -1427 12z';
+function LogoMark({ height = 32 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="15" fill={C.orange} />
-      <path d="M9 21.5c3.5 0 4-11 8-11 2.6 0 3.2 4 6 4" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" />
-      <circle cx="9" cy="21.5" r="2.2" fill="#fff" />
-      <path d="M23 9.5l1.8 4.4-4.6-.8z" fill="#fff" />
+    <svg height={height} width={(height * 1830) / 2490} viewBox="40 50 1830 2490" aria-hidden="true">
+      <g transform="translate(0 2560) scale(0.1 -0.1)"><path fill={LOGO_ORANGE} d={LOGO_MARK_D} /></g>
+    </svg>
+  );
+}
+function LogoFull({ width = 200 }) {
+  return (
+    <svg width={width} height={(width * 880) / 890} viewBox="355 360 890 880" role="img" aria-label="Routier">
+      <g transform="translate(560 360) scale(0.25)"><g transform="translate(0 2560) scale(0.1 -0.1)"><path fill={LOGO_ORANGE} d={LOGO_MARK_D} /></g></g>
+      <g transform="translate(355 1025) scale(0.25)"><g transform="translate(0 840) scale(0.1 -0.1)"><path fill={LOGO_INK} d={LOGO_WORD_D} /></g></g>
     </svg>
   );
 }
@@ -354,6 +607,8 @@ function GlobalStyles() {
       .rt-car-pulse{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(255,138,91,.28);animation:rt-pulse 1.8s ease-out infinite}
       .rt-car-inner{position:absolute;inset:0;transition:transform .2s ease-out;filter:drop-shadow(0 3px 6px rgba(232,115,68,.35))}
       .rt-sig-l,.rt-sig-r{opacity:0}
+      .rt-pin-stop{width:30px;height:30px;border-radius:50%;background:#FF8A5B;border:3px solid #fff;display:grid;place-items:center;box-shadow:0 3px 10px rgba(232,115,68,.4)}
+      .maplibregl-canvas{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
       .rt-carwrap.sig-l .rt-sig-l,.rt-carwrap.sig-r .rt-sig-r{animation:rt-sig .55s steps(1) infinite}
       @keyframes rt-sig{0%{opacity:1}50%{opacity:0}}
       .rt-car-pulse-svg{transform-box:fill-box;transform-origin:center;animation:rt-pulse 1.8s ease-out infinite}
@@ -489,11 +744,9 @@ function AuthScreen({ onAuth }) {
 
       <div className="relative px-6 pb-10 pt-[max(56px,calc(env(safe-area-inset-top)+28px))]">
         <div className="flex flex-col items-center text-center">
-          <div className="grid h-20 w-20 place-items-center rounded-[28px] bg-white shadow-[0_8px_30px_rgba(232,115,68,0.18)] ring-1 ring-[#FFD8C7]">
-            <RoutierMark size={46} />
-          </div>
-          <h1 className="mt-5 text-[34px] font-extrabold tracking-tight text-[#1E2022]">Routier</h1>
-          <p className="mt-1 text-[15px] text-[#6B7280]">Akıllı ve tasarruflu yolculuklara başla</p>
+          <h1 className="sr-only">Routier</h1>
+          <LogoFull width={190} />
+          <p className="mt-3 text-[15px] text-[#6B7280]">Akıllı ve tasarruflu yolculuklara başla</p>
         </div>
 
         <div className="mt-8 grid grid-cols-2 rounded-full bg-[#F8F6F4] p-1 ring-1 ring-[#ECEEF2]">
@@ -675,7 +928,9 @@ const MAIN_ROADS = [
 const PARKS = [[29.04, 41.014, 34], [29.033, 41.036, 22], [29.012, 41.05, 26], [29.07, 40.975, 20], [29.115, 40.995, 24], [28.99, 41.062, 18], [29.085, 41.035, 30]];
 const LABELS = [[29.06, 40.99, 'KADIKÖY'], [29.03, 41.022, 'ÜSKÜDAR'], [28.995, 41.048, 'BEŞİKTAŞ'], [29.0, 41.09, 'LEVENT'], [29.12, 41.005, 'ATAŞEHİR'], [29.1, 40.945, 'BOSTANCI'], [28.99, 41.0, 'Marmara Denizi'], [29.04, 41.07, 'İstanbul Boğazı']];
 
-function SvgMap({ routes, selected, start, end, drive, follow, onUserPan, recenterTick }) {
+function SvgMap({ routes, selected, start, end, drive, follow, onUserPan, recenterTick, stopPoint, onLongPress }) {
+  const pickCb = useRef(onLongPress);
+  pickCb.current = onLongPress;
   const wrap = useRef(null);
   const svg = useRef(null);
   const world = useRef(null);
@@ -737,12 +992,14 @@ function SvgMap({ routes, selected, start, end, drive, follow, onUserPan, recent
   useEffect(() => { if (!drivingRef.current) fit(); }, [routes, start, end]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (recenterTick && !drivingRef.current) fit(); }, [recenterTick]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!driving) fit(); }, [driving]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { apply(); }, [stopPoint, apply]);
 
   // Dokunma / fare etkileşimi
   useEffect(() => {
     const el = wrap.current;
     const pts = new Map();
     let moved = 0;
+    let lpT = null;
     let last = null;
     const local = (e) => { const r = el.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
     const zoomAt = (px, py, f) => {
@@ -769,12 +1026,25 @@ function SvgMap({ routes, selected, start, end, drive, follow, onUserPan, recent
       }
       return arr.length ? { mid: arr[0], dist: 0 } : null;
     };
+    const pickAt = ([px, py]) => {
+      const s = v.current;
+      if (drivingRef.current || !pickCb.current || s.rot) return;
+      const wx = s.cx + (px - s.cw / 2) * s.upp;
+      const wy = s.cy + (py - s.ch / 2) * s.upp;
+      pickCb.current([SVG_B.x0 + (wx / SVG_W) * (SVG_B.x1 - SVG_B.x0), SVG_B.y1 - (wy / SVG_H) * (SVG_B.y1 - SVG_B.y0)]);
+    };
     const down = (e) => {
       try { el.setPointerCapture(e.pointerId); } catch (err) { /* yok say */ }
       pts.set(e.pointerId, local(e));
       moved = 0;
       last = snapshot();
+      clearTimeout(lpT);
+      if (pts.size === 1 && e.button !== 2) {
+        const at = local(e);
+        lpT = setTimeout(() => { if (moved < 8 && pts.size === 1) pickAt(at); }, 600);
+      }
     };
+    const ctx = (e) => { e.preventDefault(); clearTimeout(lpT); pickAt(local(e)); };
     const move = (e) => {
       if (!pts.has(e.pointerId)) return;
       pts.set(e.pointerId, local(e));
@@ -787,11 +1057,12 @@ function SvgMap({ routes, selected, start, end, drive, follow, onUserPan, recent
       s.cx -= dx * s.upp;
       s.cy -= dy * s.upp;
       moved += Math.abs(dx) + Math.abs(dy);
+      if (moved >= 8) clearTimeout(lpT);
       if (moved > 4 || pts.size >= 2) userMoved();
       last = now;
       apply();
     };
-    const up = (e) => { pts.delete(e.pointerId); last = snapshot(); };
+    const up = (e) => { pts.delete(e.pointerId); last = snapshot(); clearTimeout(lpT); };
     const wheel = (e) => {
       e.preventDefault();
       const [x, y] = local(e);
@@ -806,7 +1077,10 @@ function SvgMap({ routes, selected, start, end, drive, follow, onUserPan, recent
     el.addEventListener('pointercancel', up);
     el.addEventListener('wheel', wheel, { passive: false });
     el.addEventListener('dblclick', dbl);
+    el.addEventListener('contextmenu', ctx);
     return () => {
+      clearTimeout(lpT);
+      el.removeEventListener('contextmenu', ctx);
       el.removeEventListener('pointerdown', down);
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
@@ -889,6 +1163,15 @@ function SvgMap({ routes, selected, start, end, drive, follow, onUserPan, recent
             <path d="M0 0 C -10 -13 -12 -17 -12 -23 A12 12 0 1 1 12 -23 C 12 -17 10 -13 0 0Z" fill="#FF8A5B" stroke="#fff" strokeWidth="2.5" />
             <circle cy="-23" r="4.5" fill="#fff" />
           </g>
+          {stopPoint && (() => {
+            const [qx, qy] = proj(stopPoint);
+            return (
+              <g data-at={`${qx},${qy}`}>
+                <circle r="12" fill="#FF8A5B" stroke="#fff" strokeWidth="3" />
+                <path d="M-3.5 5.5V-5.5h7.5l-1.8 2.8 1.8 2.8h-7.5" fill="none" stroke="#fff" strokeWidth="1.9" strokeLinejoin="round" strokeLinecap="round" />
+              </g>
+            );
+          })()}
           {driving && (
             <g ref={car} className="rt-carwrap">
               <circle className="rt-car-pulse-svg" r="22" fill="#FF8A5B" opacity=".22" />
@@ -902,7 +1185,9 @@ function SvgMap({ routes, selected, start, end, drive, follow, onUserPan, recent
 }
 
 /* ---------- Canlı harita (MapLibre + OpenFreeMap) ---------- */
-function LiveMap({ routes, selected, start, end, drive, follow, onUserPan, onFail, locateTick, onToast }) {
+function LiveMap({ routes, selected, start, end, drive, follow, onUserPan, onFail, locateTick, onToast, stopPoint, onLongPress }) {
+  const pickCb = useRef(onLongPress);
+  pickCb.current = onLongPress;
   const box = useRef(null);
   const mapRef = useRef(null);
   const markers = useRef({});
@@ -960,6 +1245,28 @@ function LiveMap({ routes, selected, start, end, drive, follow, onUserPan, onFai
         if (panCb.current) panCb.current();
       }
     });
+    // Basılı tutarak nokta seçme (dokunmatik) ve sağ tık (masaüstü)
+    let lp = null;
+    const lpEnd = () => { if (lp) { clearTimeout(lp.t); lp = null; } };
+    const lpStart = (e) => {
+      lpEnd();
+      if (drivingRef.current || !pickCb.current) return;
+      const oe = e.originalEvent;
+      if (oe && ((oe.touches && oe.touches.length > 1) || oe.button === 2)) return;
+      const ll = e.lngLat;
+      lp = { pt: e.point, t: setTimeout(() => { lp = null; if (pickCb.current) pickCb.current([ll.lng, ll.lat]); }, 600) };
+    };
+    const lpMove = (e) => { if (lp && e.point && Math.hypot(e.point.x - lp.pt.x, e.point.y - lp.pt.y) > 10) lpEnd(); };
+    map.on('touchstart', lpStart);
+    map.on('touchmove', lpMove);
+    map.on('touchend', lpEnd);
+    map.on('touchcancel', lpEnd);
+    map.on('mousedown', lpStart);
+    map.on('mousemove', lpMove);
+    map.on('mouseup', lpEnd);
+    map.on('dragstart', lpEnd);
+    map.on('zoomstart', lpEnd);
+    map.on('contextmenu', (e) => { lpEnd(); if (!drivingRef.current && pickCb.current) pickCb.current([e.lngLat.lng, e.lngLat.lat]); });
     map.on('load', () => {
       loaded = true;
       clearTimeout(timer);
@@ -1016,6 +1323,23 @@ function LiveMap({ routes, selected, start, end, drive, follow, onUserPan, onFai
     else markers.current.end.setLngLat(end);
     if (!drivingRef.current) fitAll();
   }, [ready, routes, selected, start, end]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Durak işareti
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    if (stopPoint) {
+      if (!markers.current.stop) {
+        const el = document.createElement('div');
+        el.className = 'rt-pin-stop';
+        el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22V3h12l-2.5 4.5L17 12H5"/></svg>';
+        markers.current.stop = new maplibregl.Marker({ element: el }).setLngLat(stopPoint).addTo(map);
+      } else markers.current.stop.setLngLat(stopPoint);
+    } else if (markers.current.stop) {
+      markers.current.stop.remove();
+      markers.current.stop = null;
+    }
+  }, [ready, stopPoint]);
 
   // Sürüş başla / bitir
   useEffect(() => {
@@ -1083,7 +1407,8 @@ function LiveMap({ routes, selected, start, end, drive, follow, onUserPan, onFai
     );
   }, [locateTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <div ref={box} className="absolute inset-0" />;
+  // Not: MapLibre kapsayıcıya 'position:relative' verir; satır içi stil ile tam ekran kalması garanti edilir
+  return <div ref={box} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%' }} />;
 }
 
 function MapCanvas(props) {
@@ -1239,16 +1564,230 @@ function AddVehicleSheet({ onClose, onSave }) {
 }
 
 /* =========================================================================
+   ROTA DÜZENLEYİCİ — başlangıç / varış arama, konumum, Ev/İş
+   ========================================================================= */
+function PlaceRow({ icon: I, title, sub, meta, onClick, right, tone = 'orange' }) {
+  return (
+    <div className="flex items-center gap-3 border-b border-[#ECEEF2] py-2.5 last:border-0">
+      <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tone === 'orange' ? 'bg-[#FFF1EB] text-[#FF8A5B]' : tone === 'blue' ? 'bg-[#EFF6FF] text-[#3B82F6]' : 'bg-[#F8F6F4] text-[#6B7280]'}`}><I size={18} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[15px] font-semibold text-[#1E2022]">{title}</span>
+          {sub && <span className="block truncate text-[12.5px] text-[#6B7280]">{sub}</span>}
+        </span>
+        {meta && <span className="rt-num shrink-0 text-[12.5px] font-medium text-[#9CA3AF]">{meta}</span>}
+      </button>
+      {right}
+    </div>
+  );
+}
+
+function RouteEditor({ origin, destination, stop, home, work, initialField, onClose, onSetOrigin, onSetDest, onSwap, onClearStop, onSaveSlot, onAsk, onToast }) {
+  const [field, setField] = useState(initialField || 'dest');
+  const [slot, setSlot] = useState(null); // 'home' | 'work' : sıradaki seçim bu adrese kaydedilir
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [status, setStatus] = useState('idle'); // idle | loading | ok | offline
+  const [locating, setLocating] = useState(false);
+  const inputRef = useRef(null);
+  const reqId = useRef(0);
+
+  useEffect(() => { setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 250); }, [field, slot]);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setResults([]); setStatus('idle'); return undefined; }
+    const id = ++reqId.current;
+    setStatus('loading');
+    const tm = setTimeout(async () => {
+      const r = await geocode(q, origin ? origin.coord : null);
+      if (id !== reqId.current) return;
+      setResults(r.items);
+      setStatus(r.offline ? 'offline' : 'ok');
+    }, 380);
+    return () => clearTimeout(tm);
+  }, [query]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const choose = (place) => {
+    if (slot) {
+      onSaveSlot(slot, { ...place, demo: false });
+      onToast(`${slot === 'home' ? 'Ev' : 'İş'} adresi kaydedildi: ${place.name}`, 'ok');
+      setSlot(null);
+      setQuery('');
+      return;
+    }
+    if (field === 'origin') {
+      if (destination && distM(place.coord, destination.coord) < 30) { onToast('Başlangıç ve varış aynı olamaz', 'warn'); return; }
+      onSetOrigin(place);
+      onToast(`Başlangıç: ${place.name}`, 'ok');
+      onClose();
+    } else {
+      if (origin && distM(place.coord, origin.coord) < 30) { onToast('Başlangıç ve varış aynı olamaz', 'warn'); return; }
+      onSetDest(place);
+      onToast(`Hedef: ${place.name}`, 'ok');
+      onClose();
+    }
+  };
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) { onToast('Konum servisi bu cihazda kullanılamıyor', 'warn'); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (p) => {
+        const coord = [p.coords.longitude, p.coords.latitude];
+        const rev = await reverseGeocode(coord);
+        setLocating(false);
+        choose({ name: 'Konumunuz', sub: [rev.name, rev.sub].filter(Boolean).join(', '), coord, current: true });
+      },
+      () => { setLocating(false); onToast('Konum izni verilmedi. Tarayıcı ayarlarından izin verebilirsiniz.', 'warn'); },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  };
+
+  const kmFrom = (c) => (origin ? `${fmt1(distM(origin.coord, c) / 1000)} km` : '');
+  const fieldBox = (k, label, value, dot) => {
+    const on = field === k && !slot;
+    return (
+      <button type="button" onClick={() => { setField(k); setSlot(null); setQuery(''); }}
+        className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition ${on ? 'bg-white ring-2 ring-[#FFD8C7]' : 'bg-[#FAFAFA] ring-1 ring-[#ECEEF2]'}`}>
+        {dot}
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11.5px] font-semibold text-[#9CA3AF]">{label}</span>
+          <span className="block truncate text-[15px] font-semibold text-[#1E2022]">{value ? value.name : 'Seçin'}</span>
+        </span>
+        {on && <Pencil size={14} className="shrink-0 text-[#E87344]" />}
+      </button>
+    );
+  };
+
+  return (
+    <Sheet onClose={onClose} title="Rota Düzenle" tall>
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1 space-y-2">
+          {fieldBox('origin', 'Başlangıç', origin, <span className="ml-1 h-3.5 w-3.5 shrink-0 rounded-full border-[3.5px] border-[#1E2022]" />)}
+          {fieldBox('dest', 'Varış', destination, <MapPin size={17} className="shrink-0 text-[#FF8A5B]" fill="#FFF1EB" />)}
+        </div>
+        <button type="button" onClick={() => { onSwap(); onToast('Başlangıç ve varış yer değiştirdi', 'ok'); }} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#FFF1EB] text-[#E87344]" aria-label="Başlangıç ve varışı değiştir">
+          <ArrowLeftRight size={18} className="rotate-90" />
+        </button>
+      </div>
+
+      {stop && (
+        <div className="mt-2 flex items-center gap-2 rounded-2xl bg-[#FFF1EB] px-3 py-2">
+          <Flag size={15} className="shrink-0 text-[#FF8A5B]" />
+          <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-[#1E2022]">Durak: {stop.name}</p>
+          <button type="button" onClick={onClearStop} className="grid h-7 w-7 place-items-center rounded-full text-[#6B7280] hover:bg-white" aria-label="Durağı kaldır"><X size={15} /></button>
+        </div>
+      )}
+
+      <div className="mt-3">
+        {slot && (
+          <p className="mb-2 flex items-center justify-between rounded-xl bg-[#EFF6FF] px-3 py-2 text-[13px] font-medium text-[#1D4ED8]">
+            <span>{slot === 'home' ? 'Ev' : 'İş'} adresini arayıp seçin</span>
+            <button type="button" onClick={() => setSlot(null)} className="font-bold">Vazgeç</button>
+          </p>
+        )}
+        <label className="flex h-[50px] items-center gap-2.5 rounded-2xl border border-[#ECEEF2] bg-[#FAFAFA] px-4 focus-within:border-[#FFD8C7] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#FFF1EB]">
+          <Search size={18} className="shrink-0 text-[#6B7280]" />
+          <input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)}
+            placeholder={slot ? `${slot === 'home' ? 'Ev' : 'İş'} adresi ara...` : field === 'origin' ? 'Başlangıç noktası ara...' : 'Nereye gidiyorsunuz?'}
+            className="h-full min-w-0 flex-1 bg-transparent text-[16px] text-[#1E2022] outline-none placeholder:text-[#9CA3AF]" enterKeyHint="search" />
+          {status === 'loading' && <Loader2 size={17} className="shrink-0 animate-spin text-[#FF8A5B]" />}
+          {query && <button type="button" onClick={() => setQuery('')} className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[#9CA3AF]" aria-label="Temizle"><X size={15} /></button>}
+        </label>
+      </div>
+
+      <div className="mt-2 pb-2">
+        {query.trim().length >= 2 ? (
+          <>
+            {!slot && (
+              <PlaceRow icon={Sparkles} title={`Routier'e sor: "${query.trim()}"`} sub="Yapay zekâ asistanına yönlendir" onClick={() => onAsk(query.trim())} />
+            )}
+            {results.map((p, i) => (
+              <PlaceRow key={`${p.name}-${i}`} icon={MapPin} title={p.name} sub={p.sub} meta={kmFrom(p.coord)} onClick={() => choose(p)} />
+            ))}
+            {status !== 'loading' && !results.length && <p className="py-6 text-center text-[14px] text-[#9CA3AF]">Sonuç bulunamadı. Farklı bir adres deneyin.</p>}
+            {status === 'offline' && <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[#9CA3AF]"><CloudOff size={13} />Arama servisine ulaşılamadı, kayıtlı yerler gösteriliyor.</p>}
+          </>
+        ) : (
+          <>
+            {!slot && (
+              <PlaceRow icon={locating ? Loader2 : LocateFixed} tone="blue" title="Mevcut konumum" sub={locating ? 'Konum alınıyor…' : 'GPS ile bulunduğunuz yer'} onClick={useMyLocation} />
+            )}
+            {[['home', 'Ev', Home, home], ['work', 'İş', Briefcase, work]].map(([k, l, I, p]) => (
+              <PlaceRow key={k} icon={I} title={l} sub={p ? p.sub || p.name : 'Henüz kaydedilmedi'} meta={p && !slot ? kmFrom(p.coord) : ''}
+                onClick={() => (p && !slot ? choose({ ...p, name: p.demo ? p.name : (k === 'home' ? 'Ev' : 'İş') }) : setSlot(k))}
+                right={<button type="button" onClick={() => { setSlot(k); setQuery(''); }} className="h-8 shrink-0 rounded-full border border-[#FFD8C7] px-3 text-[12.5px] font-bold text-[#E87344]">{p && !p.demo ? 'Değiştir' : 'Kaydet'}</button>} />
+            ))}
+            {!slot && (
+              <>
+                <p className="mt-3 text-[12.5px] font-bold text-[#9CA3AF]">Popüler yerler</p>
+                {PRESET_PLACES.map((p) => <PlaceRow key={p.name} icon={MapPin} tone="gray" title={p.name} sub={p.sub} meta={kmFrom(p.coord)} onClick={() => choose(p)} />)}
+              </>
+            )}
+            <p className="mt-3 flex items-start gap-1.5 text-[12px] leading-relaxed text-[#9CA3AF]"><Info size={13} className="mt-0.5 shrink-0" />İpucu: Haritada bir noktaya basılı tutarak da hedef, başlangıç veya durak seçebilirsiniz.</p>
+          </>
+        )}
+      </div>
+    </Sheet>
+  );
+}
+
+/* Durak seçim penceresi */
+function StopSheet({ kind, state, stop, onPick, onClose, onRetry }) {
+  const K = POI_KINDS[kind];
+  const I = K.icon;
+  return (
+    <Sheet onClose={onClose} title={K.title}>
+      <p className="-mt-1 mb-3 text-[13.5px] text-[#6B7280]">Rotanıza en az ek mesafe katan duraklar üstte. Seçtiğiniz durak rotaya eklenir ve rota yeniden hesaplanır.</p>
+      {kind === 'fuel' && <p className="mb-3 flex items-start gap-1.5 rounded-xl bg-[#FFFBEB] px-3 py-2 text-[12px] leading-relaxed text-[#92400E]"><Info size={13} className="mt-0.5 shrink-0" />Pompa fiyatları için bir fiyat servisi henüz bağlı değil. İstasyonlar şimdilik en kısa sapmaya göre sıralanıyor.</p>}
+      {state.status === 'loading' && (
+        <div className="flex flex-col items-center py-10 text-[14px] text-[#6B7280]"><Loader2 size={26} className="mb-3 animate-spin text-[#FF8A5B]" />Rota boyunca aranıyor…</div>
+      )}
+      {state.status !== 'loading' && !state.items.length && (
+        <div className="flex flex-col items-center py-8 text-center text-[14px] text-[#6B7280]">
+          Rotanın yakınında {K.label.toLocaleLowerCase('tr-TR')} bulunamadı.
+          <button type="button" onClick={onRetry} className="mt-3 h-9 rounded-full border border-[#FFD8C7] px-4 text-[13px] font-bold text-[#E87344]">Tekrar dene</button>
+        </div>
+      )}
+      <div className="space-y-2 pb-2">
+        {state.items.map((p, i) => {
+          const added = stop && sameCoord(stop.coord, p.coord);
+          return (
+            <div key={`${p.name}-${i}`} className={`flex items-center gap-3 rounded-2xl p-3 ring-1 ${i === 0 ? 'bg-[#FFF1EB] ring-[#FFD8C7]' : 'bg-[#FAFAFA] ring-[#ECEEF2]'}`}>
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white text-[#FF8A5B]"><I size={19} /></span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[14.5px] font-bold text-[#1E2022]">{p.name}</p>
+                <p className="rt-num truncate text-[12.5px] text-[#6B7280]">
+                  <span className="font-semibold text-[#10B981]">+{fmt1(p.addKm)} km</span> • +{Math.max(1, Math.round(p.addMin))} dk
+                  {p.fromStartKm != null && ` • ${fmt1(p.fromStartKm)} km sonra`}
+                </p>
+                {p.sub && <p className="truncate text-[12px] text-[#9CA3AF]">{p.sub}</p>}
+              </div>
+              <button type="button" onClick={() => onPick(p)} disabled={added}
+                className={`h-9 shrink-0 rounded-full px-3.5 text-[12.5px] font-bold ${added ? 'bg-[#ECFDF5] text-[#10B981]' : 'bg-[#FF8A5B] text-white'}`}>
+                {added ? 'Eklendi' : 'Rotaya Ekle'}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      {state.offline && <p className="mb-2 flex items-center gap-1.5 text-[12px] text-[#9CA3AF]"><CloudOff size={13} />Durak servisine ulaşılamadı, örnek duraklar gösteriliyor.</p>}
+    </Sheet>
+  );
+}
+
+/* =========================================================================
    SEKMELER
    ========================================================================= */
 
 /* ---------- Rotalar ---------- */
-function RoutesScreen({ dest, routes, selected, setSelected, vehicle, onShowMap, onStart, onSwapDest, onAddVehicle, stop }) {
+function RoutesScreen({ origin, destination, routes, selected, setSelected, vehicle, onShowMap, onStart, onSwap, onEdit, onClearStop, onAddVehicle, stop, routeState }) {
   const fast = routes.find((r) => r.id === 'fast');
   const fastTrip = calcTrip(fast, vehicle);
   return (
     <div className="rt-noscroll h-full overflow-y-auto bg-[#F8F6F4] pb-32">
-      <ScreenHeader title="Rota Planla" sub="3 rota, aracınıza göre fiyatlandı" />
+      <ScreenHeader title="Rota Planla" sub={routeState === 'loading' ? 'Rotalar hesaplanıyor…' : `${routes.length} rota, aracınıza göre fiyatlandı`} />
       <div className="mx-5 rounded-3xl bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
         <div className="flex items-stretch gap-3">
           <div className="flex flex-col items-center py-2">
@@ -1257,18 +1796,25 @@ function RoutesScreen({ dest, routes, selected, setSelected, vehicle, onShowMap,
             <MapPin size={16} className="text-[#FF8A5B]" fill="#FFF1EB" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="border-b border-[#ECEEF2] pb-3">
-              <p className="text-[12px] font-medium text-[#9CA3AF]">Başlangıç</p>
-              <p className="truncate text-[15px] font-semibold text-[#1E2022]">Konumunuz • {START.name}</p>
-            </div>
-            <div className="pt-3">
-              <p className="text-[12px] font-medium text-[#9CA3AF]">Varış</p>
-              <p className="truncate text-[15px] font-semibold text-[#1E2022]">{dest.name} • {dest.sub}</p>
-            </div>
+            <button type="button" onClick={() => onEdit('origin')} className="block w-full border-b border-[#ECEEF2] pb-3 text-left">
+              <p className="flex items-center justify-between text-[12px] font-medium text-[#9CA3AF]">Başlangıç <Pencil size={12} className="text-[#E87344]" /></p>
+              <p className="truncate text-[15px] font-semibold text-[#1E2022]">{origin.name}{origin.sub ? <span className="font-normal text-[#6B7280]"> • {origin.sub}</span> : null}</p>
+            </button>
+            <button type="button" onClick={() => onEdit('dest')} className="block w-full pt-3 text-left">
+              <p className="flex items-center justify-between text-[12px] font-medium text-[#9CA3AF]">Varış <Pencil size={12} className="text-[#E87344]" /></p>
+              <p className="truncate text-[15px] font-semibold text-[#1E2022]">{destination.name}{destination.sub ? <span className="font-normal text-[#6B7280]"> • {destination.sub}</span> : null}</p>
+            </button>
           </div>
-          <button type="button" onClick={onSwapDest} className="grid h-10 w-10 shrink-0 self-center place-items-center rounded-full bg-[#FFF1EB] text-[#E87344]" aria-label="Hedefi değiştir"><ArrowLeftRight size={17} /></button>
+          <button type="button" onClick={onSwap} className="grid h-10 w-10 shrink-0 self-center place-items-center rounded-full bg-[#FFF1EB] text-[#E87344]" aria-label="Başlangıç ve varışı değiştir"><ArrowLeftRight size={17} className="rotate-90" /></button>
         </div>
-        {stop && <p className="mt-3 flex items-center gap-2 rounded-xl bg-[#FFF1EB] px-3 py-2 text-[13px] font-medium text-[#E87344]"><Flag size={14} /> Ara durak: {stop.name} (+{stop.detour} dk)</p>}
+        {stop && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#FFF1EB] px-3 py-2 text-[13px] font-medium text-[#E87344]">
+            <Flag size={14} className="shrink-0" />
+            <span className="min-w-0 flex-1 truncate">Ara durak: {stop.name}{stop.addKm != null ? ` (+${fmt1(stop.addKm)} km)` : ''}</span>
+            <button type="button" onClick={onClearStop} className="grid h-6 w-6 place-items-center rounded-full hover:bg-white" aria-label="Durağı kaldır"><X size={14} /></button>
+          </div>
+        )}
+        {routeState === 'offline' && <p className="mt-3 flex items-center gap-1.5 text-[12px] text-[#9CA3AF]"><CloudOff size={13} />Rota servisine ulaşılamadı, tahmini rota gösteriliyor.</p>}
       </div>
 
       <div className="mx-5 mt-4 flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-[#ECEEF2]">
@@ -1298,6 +1844,7 @@ function RoutesScreen({ dest, routes, selected, setSelected, vehicle, onShowMap,
                     <div className="flex flex-wrap items-center gap-1.5">
                       <p className="text-[16px] font-bold text-[#1E2022]">{r.title}</p>
                       {r.id === 'eco' && <span className="rounded-full bg-[#FFF1EB] px-2 py-0.5 text-[11px] font-bold text-[#E87344]">Önerilen</span>}
+                      {r.sameAsFast && <span className="rounded-full bg-[#ECFDF5] px-2 py-0.5 text-[11px] font-bold text-[#10B981]">En hızlısı da bu</span>}
                     </div>
                     <p className="truncate text-[13px] text-[#6B7280]">{r.tag} • {r.via}</p>
                   </div>
@@ -1411,7 +1958,7 @@ function AIScreen({ messages, onSend, typing, stop, onAddStation, onApplyEco, li
               <span className="mb-1 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#FFF1EB] text-[#FF8A5B]"><Sparkles size={14} /></span>
               <div className="max-w-[86%] rounded-3xl rounded-bl-lg border border-[#FFD8C7] bg-[#FFF1EB] px-4 py-3 text-[14.5px] leading-relaxed text-[#1E2022]">
                 <p className="whitespace-pre-line">{m.text}</p>
-                {m.station && <StationCard added={!!stop && stop.name.startsWith('Opet')} onAdd={onAddStation} />}
+                {m.station && <StationCard added={!!stop && stop.kind === 'fuel'} onAdd={onAddStation} />}
                 {m.eco && (
                   <button type="button" onClick={onApplyEco} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-[#FF8A5B] text-[14px] font-bold text-white hover:bg-[#E87344]">
                     <Route size={16} />Eco Rotayı Haritada Çiz
@@ -1667,16 +2214,20 @@ export default function App() {
   });
   const [settings, setSettings] = useState(() => store.get('routier_settings', { voice: true, notify: true, eco: true }));
   const [tab, setTab] = useState('map');
-  const [destKey, setDestKey] = useState('is');
+  const [origin, setOrigin] = useState(() => store.get('routier_origin', DEMO_ORIGIN));
+  const [destination, setDestination] = useState(() => store.get('routier_dest', DEMO_WORK));
   const [selected, setSelected] = useState('eco');
-  const [geoms, setGeoms] = useState(DESTINATIONS.is.fallback);
+  const [cands, setCands] = useState(DEMO_CANDIDATES);
+  const [routeState, setRouteState] = useState('loading'); // loading | ok | offline
+  const [editor, setEditor] = useState(null); // 'origin' | 'dest'
+  const [poi, setPoi] = useState({ kind: null, status: 'idle', items: [], offline: false });
+  const [pick, setPick] = useState(null);
   const [sheetOpen, setSheetOpen] = useState(true);
   const [modal, setModal] = useState(null); // 'add' | 'switch' | 'poi:fuel' | 'summary'
   const [toast, setToast] = useState(null);
   const [stop, setStop] = useState(null);
   const [nav, setNav] = useState(null); // { progress }
   const [summary, setSummary] = useState(null);
-  const [query, setQuery] = useState('');
   const [listening, setListening] = useState(false);
   const [locateTick, setLocateTick] = useState(0);
   const [follow, setFollow] = useState(true);
@@ -1686,7 +2237,8 @@ export default function App() {
   const [newPass, setNewPass] = useState('');
   const loadedFor = useRef((() => { const st = store.get('routier_session', null); return st && !st.remote ? st.id : null; })());
 
-  const dest = DESTINATIONS[destKey];
+  const home = settings.home || DEMO_HOME;
+  const work = settings.work || DEMO_WORK;
   const vehicle = garage.list.find((v) => v.id === garage.activeId) || null;
 
   /* ---- Font & kalıcılık ---- */
@@ -1721,28 +2273,35 @@ export default function App() {
     setMessages([{ id: 'hello', role: 'ai', text: `Merhaba ${firstName}! Ben Routier AI. Rotanı, yakıt maliyetini ve yol üstündeki en uygun istasyonları senin için takip ediyorum. Ne yapmamı istersin?` }]);
   }, [session?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ---- Gerçek rota geometrisi (OSRM). Ağ kısıtlıysa hazır geometri kullanılır ---- */
-  useEffect(() => {
-    const d = DESTINATIONS[destKey];
-    setGeoms(d.fallback);
-    let cancelled = false;
-    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const tm = setTimeout(() => ctrl && ctrl.abort(), 7000);
-    const url = `${OSRM}${START.coord.join(',')};${d.coord.join(',')}?alternatives=3&overview=full&geometries=geojson`;
-    fetch(url, ctrl ? { signal: ctrl.signal } : undefined)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('osrm'))))
-      .then((j) => {
-        if (cancelled || !j.routes || !j.routes.length) return;
-        const rs = j.routes.map((r) => r.geometry.coordinates);
-        setGeoms({ fast: rs[0], eco: rs[1] || d.fallback.eco, scenic: rs[2] || d.fallback.scenic });
-      })
-      .catch(() => { /* çevrimdışı/kısıtlı ortam: hazır geometri */ })
-      .finally(() => clearTimeout(tm));
-    return () => { cancelled = true; clearTimeout(tm); if (ctrl) ctrl.abort(); };
-  }, [destKey]);
+  /* ---- Başlangıç / varış kalıcılığı ---- */
+  useEffect(() => { store.set('routier_origin', origin); }, [origin]);
+  useEffect(() => { store.set('routier_dest', destination); }, [destination]);
 
-  /* ---- Rotalar + durak sapması ---- */
-  const routes = useMemo(() => dest.routes.map((r) => (stop ? { ...r, min: r.min + stop.detour, km: Math.round((r.km + stop.detour * 0.3) * 10) / 10 } : r)), [dest, stop]);
+  /* ---- Rota hesaplama: OSRM alternatifleri + otoyolsuz seçenek, durak varsa duraktan geçer ---- */
+  useEffect(() => {
+    const pts = stop ? [origin.coord, stop.coord, destination.coord] : [origin.coord, destination.coord];
+    let alive = true;
+    setRouteState('loading');
+    (async () => {
+      try {
+        const [main, alt] = await Promise.allSettled([osrmCandidates(pts, { alternatives: true }), osrmCandidates(pts, { exclude: 'motorway' })]);
+        if (main.status !== 'fulfilled') throw main.reason;
+        if (!alive) return;
+        setCands([...main.value, ...(alt.status === 'fulfilled' ? alt.value : [])]);
+        setRouteState('ok');
+      } catch (e) {
+        if (!alive) return;
+        const demo = !stop && sameCoord(origin.coord, DEMO_ORIGIN.coord) && sameCoord(destination.coord, DEMO_WORK.coord);
+        setCands(demo ? DEMO_CANDIDATES : synthCandidates(pts));
+        setRouteState('offline');
+      }
+    })();
+    return () => { alive = false; };
+  }, [origin, destination, stop]);
+
+  const routes = useMemo(() => classifyRoutes(cands, !!vehicle && vehicle.fuelType === 'Elektrik'), [cands, vehicle && vehicle.fuelType]); // eslint-disable-line react-hooks/exhaustive-deps
+  const geoms = useMemo(() => Object.fromEntries(routes.map((r) => [r.id, r.coords])), [routes]);
+  useEffect(() => { if (routes.length && !routes.some((r) => r.id === selected)) setSelected('eco'); }, [routes, selected]);
   const route = routes.find((r) => r.id === selected) || routes[0];
   const trip = calcTrip(route, vehicle);
   const fastTrip = calcTrip(routes.find((r) => r.id === 'fast'), vehicle);
@@ -1904,7 +2463,7 @@ export default function App() {
     const km = route.km * done;
     const t = calcTrip({ ...route, km }, vehicle);
     const ft = calcTrip({ ...routes.find((r) => r.id === 'fast'), km }, vehicle);
-    const rec = { id: Date.now(), dest: dest.name, km, min: Math.round(route.min * done), cost: t ? t.cost : 0, amount: t ? t.amount : 0, unit: t ? t.unit : 'L', saved: t && ft && selected !== 'fast' ? Math.max(0, ft.cost - t.cost) : 0, completed };
+    const rec = { id: Date.now(), dest: destination.name, km, min: Math.round(route.min * done), cost: t ? t.cost : 0, amount: t ? t.amount : 0, unit: t ? t.unit : 'L', saved: t && ft && selected !== 'fast' ? Math.max(0, ft.cost - t.cost) : 0, completed };
     setNav(null);
     setSummary(rec);
     if (km > 0.05) {
@@ -1912,7 +2471,7 @@ export default function App() {
       cloudSync(() => cloud.addTrip(session.id, { ...rec, vehicleId: vehicle ? vehicle.id : null, routeType: selected }));
     }
     setModal('summary');
-  }, [route, routes, vehicle, dest, selected, cloudSync, session]);
+  }, [route, routes, vehicle, destination, selected, cloudSync, session]);
 
   useEffect(() => { if (nav && nav.progress >= 1) finishDrive(true); }, [nav, finishDrive]);
 
@@ -1926,20 +2485,25 @@ export default function App() {
   };
 
   const navInfo = useMemo(() => {
-    if (!nav) return null;
+    if (!nav || !route) return null;
     const p = nav.progress;
-    const steps = dest.steps;
-    let idx = 0;
-    steps.forEach((s, i) => { if (p >= s.at) idx = i; });
-    const next = steps[idx + 1];
+    const steps = route.steps && route.steps.length ? route.steps : [{ at: 1, icon: Flag, text: 'Hedefinize varıyorsunuz', arrive: true }];
+    const nextIdx = steps.findIndex((st) => st.at > p + 1e-6);
+    const next = nextIdx >= 0 ? steps[nextIdx] : null;
     const toNext = next ? (next.at - p) * route.km : (1 - p) * route.km;
-    const cur = next || { icon: Flag, text: `${dest.name} — hedefe varıyorsunuz` };
-    const base = p < 0.12 ? 38 : p < 0.32 ? 56 : p < 0.72 ? 82 : p < 0.88 ? 61 : 34;
-    const speed = Math.max(0, Math.round(base + Math.sin(p * 90) * 6));
-    const inst = vehicle ? vehicle.consumption * route.factor * (speed > 70 ? 0.9 : speed < 40 ? 1.25 : 1.05) * (1 + Math.sin(p * 55) * 0.05) : null;
-    const used = vehicle ? (route.km * p / 100) * vehicle.consumption * route.factor : null;
-    return { step: cur, toNext, speed, inst, used, remainKm: route.km * (1 - p), remainMin: Math.max(0, Math.ceil(route.min * (1 - p))), limit: base > 70 ? 90 : base > 50 ? 70 : 50 };
-  }, [nav, dest, route, vehicle]);
+    let step = next || { icon: Flag, text: 'Hedefinize varıyorsunuz', arrive: true };
+    if (step.stopArrive) step = { ...step, text: stop ? `Durak: ${stop.name}` : step.text };
+    if (step.arrive) step = { ...step, text: `${destination.name} — hedefinize varıyorsunuz` };
+    const cur = nextIdx > 0 ? steps[nextIdx - 1] : nextIdx === -1 ? steps[steps.length - 1] : steps[0];
+    const stepSpeed = cur && cur.dur > 5 && cur.dist > 30 ? (cur.dist / cur.dur) * 3.6 : route.avgSpeed || 45;
+    const base = clamp(stepSpeed, 15, 125);
+    const speed = Math.max(0, Math.round(base * (0.94 + Math.sin(p * 90) * 0.05)));
+    const ev = !!vehicle && vehicle.fuelType === 'Elektrik';
+    const inst = vehicle ? vehicle.consumption * speedFactor(speed, ev) * (1 + Math.sin(p * 55) * 0.04) : null;
+    const used = vehicle ? ((route.km * p) / 100) * vehicle.consumption * route.factor : null;
+    const limit = base > 105 ? 120 : base > 85 ? 110 : base > 62 ? 90 : base > 45 ? 70 : 50;
+    return { step, toNext, speed, inst, used, remainKm: route.km * (1 - p), remainMin: Math.max(0, Math.ceil(route.min * (1 - p))), limit };
+  }, [nav, route, vehicle, stop, destination]);
 
   /* ---- AI cevapları ---- */
   const aiReply = useCallback((q) => {
@@ -1956,7 +2520,7 @@ export default function App() {
     if (/trafik|en az|yakan|eco|ekonomik|rota/.test(t)) {
       const eco = routes.find((r) => r.id === 'eco');
       const e = calcTrip(eco, vehicle);
-      return { text: `Altunizade'de yoğunluk var; Routier Eco rotası D-100 üzerinden akışı koruyor.\n• ${eco.min} dk • ${fmt1(eco.km)} km${e ? `\n• ${fmt(e.amount)} ${e.unit} • ${tl(e.cost)}${fastTrip ? ` (en hızlıya göre ${tl(Math.max(0, fastTrip.cost - e.cost))} tasarruf)` : ''}` : '\n• Maliyet için araç eklemen gerekiyor'}`, eco: true };
+      return { text: `Routier Eco rotası ${eco.via} üzerinden ilerliyor.\n• ${eco.min} dk • ${fmt1(eco.km)} km${e ? `\n• ${fmt(e.amount)} ${e.unit} • ${tl(e.cost)}${fastTrip ? ` (en hızlıya göre ${tl(Math.max(0, fastTrip.cost - e.cost))} tasarruf)` : ''}` : '\n• Maliyet için araç eklemen gerekiyor'}`, eco: true };
     }
     return { text: 'Bunu not aldım. Şu an rota planlama, yakıt maliyeti ve yol üstü istasyonlar konusunda sana en iyi şekilde yardımcı olabilirim. Aşağıdaki önerilerden birini deneyebilirsin.' };
   }, [vehicle, route, routes, fastTrip]);
@@ -1972,29 +2536,47 @@ export default function App() {
     }, 950);
   };
 
-  const addStop = (s) => {
-    setStop(s);
+  /* ---- Başlangıç / varış / durak ---- */
+  const changeOrigin = useCallback((pl) => { setOrigin(pl); setStop(null); setSheetOpen(true); }, []);
+  const changeDest = useCallback((pl) => { setDestination(pl); setStop(null); setSheetOpen(true); }, []);
+  const swapEnds = () => { setOrigin(destination); setDestination(origin); setStop(null); };
+  const saveSlot = (slot, pl) => setSettings((st) => ({ ...st, [slot]: { name: pl.name, sub: pl.sub ? `${pl.name}, ${pl.sub}` : pl.name, coord: pl.coord } }));
+
+  const addStop = (st) => {
+    setStop(st);
     setModal(null);
-    showToast(`${s.name} rotaya eklendi (+${s.detour} dk)`, 'ok');
+    setSheetOpen(true);
+    showToast(`${st.name} durağı eklendi, rota yeniden hesaplanıyor`, 'ok');
+  };
+  const clearStop = () => { setStop(null); showToast('Durak rotadan kaldırıldı'); };
+  const baseCoords = () => (routes.find((r) => r.id === selected) || routes[0]).coords;
+  const openStops = async (kind) => {
+    setModal('poi');
+    setPoi({ kind, status: 'loading', items: [], offline: false });
+    const r = await findStops(kind, baseCoords(), origin.coord, destination.coord);
+    setPoi((cur) => (cur.kind === kind ? { kind, status: 'ok', items: r.items, offline: r.offline } : cur));
+  };
+  const addBestStop = async (kind) => {
+    showToast('Rotadaki en az sapan istasyon aranıyor…');
+    const r = await findStops(kind, baseCoords(), origin.coord, destination.coord);
+    if (r.items.length) { addStop(r.items[0]); setTab('map'); } else showToast('Rota yakınında istasyon bulunamadı', 'warn');
   };
 
   const pill = (k) => {
     if (k === 'ev' || k === 'is') {
-      setDestKey(k);
-      setStop(null);
-      setSheetOpen(true);
-      showToast(`Hedef: ${DESTINATIONS[k].name}`, 'ok');
-    } else setModal(`poi:${k}`);
+      const pl = k === 'ev' ? home : work;
+      if (distM(pl.coord, origin.coord) < 30) { showToast('Zaten bu konumdasınız; başlangıcı değiştirin', 'warn'); setEditor('origin'); return; }
+      changeDest({ ...pl, name: pl.demo ? pl.name : (k === 'ev' ? 'Ev' : 'İş') });
+      showToast(`Hedef: ${k === 'ev' ? 'Ev' : 'İş'}${pl.demo ? ' (örnek adres — Rota Düzenle\'den kaydedin)' : ''}`, 'ok');
+    } else openStops(k);
   };
 
-  const submitSearch = (e) => {
-    e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
-    setQuery('');
-    setTab('ai');
-    sendAI(q);
-  };
+  const onLongPress = useCallback((coord) => {
+    setPick({ coord, place: null });
+    setModal('pick');
+    reverseGeocode(coord).then((place) => setPick((cur) => (cur && cur.coord === coord ? { ...cur, place } : cur)));
+  }, []);
+  const pickPlace = () => (pick && (pick.place || { name: 'Seçilen nokta', sub: `${pick.coord[1].toFixed(5)}, ${pick.coord[0].toFixed(5)}`, coord: pick.coord }));
 
   /* ================================ RENDER ================================ */
   const frame = (content) => (
@@ -2023,30 +2605,25 @@ export default function App() {
     { k: 'garage', label: 'Garajım', icon: Warehouse },
     { k: 'profile', label: 'Profil', icon: User },
   ];
-  const poiKey = modal && modal.startsWith('poi:') ? modal.slice(4) : null;
   const unit = vehicle ? FUELS[vehicle.fuelType].unit : 'L';
 
   return frame(
     <>
       {/* Harita her zaman arka planda */}
-      <MapCanvas routes={geoms} selected={selected} start={START.coord} end={dest.coord} drive={nav ? nav.progress : null} follow={follow} onUserPan={() => setFollow(false)} locateTick={locateTick} onToast={showToast} />
+      <MapCanvas routes={geoms} selected={selected} start={origin.coord} end={destination.coord} stopPoint={stop ? stop.coord : null} onLongPress={nav ? null : onLongPress} drive={nav ? nav.progress : null} follow={follow} onUserPan={() => setFollow(false)} locateTick={locateTick} onToast={showToast} />
 
       {/* ------------------ KEŞFET (HARİTA) ------------------ */}
       {tab === 'map' && !nav && (
         <>
           <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-[max(14px,calc(env(safe-area-inset-top)+6px))] [&>*]:pointer-events-auto">
-            <form onSubmit={submitSearch} className="flex h-[54px] items-center gap-3 rounded-full bg-white/85 pl-2 pr-2 shadow-[0_8px_30px_rgba(0,0,0,0.08)] ring-1 ring-white/60 backdrop-blur-md">
-              <span className="shrink-0"><RoutierMark size={38} /></span>
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Routier'e sor veya hedef ara..." className="h-full min-w-0 flex-1 bg-transparent text-[16px] text-[#1E2022] outline-none placeholder:text-[#6B7280]" />
-              {query ? (
-                <button type="submit" className="grid h-10 w-10 place-items-center rounded-full bg-[#FF8A5B] text-white" aria-label="Ara"><Search size={18} /></button>
-              ) : (
-                <button type="button" onClick={() => { setListening(true); setTab('ai'); showToast('Dinliyorum… komutunuzu söyleyin'); }} className="grid h-10 w-10 place-items-center rounded-full text-[#1E2022] hover:bg-[#FFF1EB]" aria-label="Sesli arama"><Mic size={20} /></button>
-              )}
-            </form>
+            <div className="flex h-[54px] items-center gap-2.5 rounded-full bg-white/85 pl-4 pr-2 shadow-[0_8px_30px_rgba(0,0,0,0.08)] ring-1 ring-white/60 backdrop-blur-md">
+              <span className="shrink-0"><LogoMark height={30} /></span>
+              <button type="button" onClick={() => setEditor('dest')} className="h-full min-w-0 flex-1 truncate text-left text-[16px] text-[#6B7280]">Routier'e sor veya hedef ara...</button>
+              <button type="button" onClick={() => { setListening(true); setTab('ai'); showToast('Dinliyorum… komutunuzu söyleyin'); }} className="grid h-10 w-10 place-items-center rounded-full text-[#1E2022] hover:bg-[#FFF1EB]" aria-label="Sesli arama"><Mic size={20} /></button>
+            </div>
             <div className="rt-noscroll -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
               {[['ev', 'Ev', Home], ['is', 'İş', Briefcase], ['fuel', 'En Ucuz Benzin', Fuel], ['cafe', 'Kafe', Coffee], ['charge', 'Şarj', Zap]].map(([k, l, I]) => {
-                const on = k === destKey;
+                const on = k === 'ev' ? sameCoord(destination.coord, home.coord) : k === 'is' ? sameCoord(destination.coord, work.coord) : !!stop && stop.kind === k;
                 return (
                   <button key={k} type="button" onClick={() => pill(k)}
                     className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13.5px] font-semibold shadow-[0_4px_14px_rgba(0,0,0,0.06)] backdrop-blur-md transition ${on ? 'bg-[#FF8A5B] text-white' : 'bg-white/85 text-[#1E2022]'}`}>
@@ -2083,12 +2660,13 @@ export default function App() {
             <div className="px-5 pt-2">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="flex items-baseline gap-2">
-                    <span className="rt-num text-[30px] font-extrabold leading-none text-[#1E2022]">{route.min} dk</span>
+                  <div className={`flex items-baseline gap-2 transition ${routeState === 'loading' ? 'opacity-40' : ''}`}>
+                    <span className="rt-num text-[30px] font-extrabold leading-none text-[#1E2022]">{route.min >= 60 ? `${Math.floor(route.min / 60)} sa ${route.min % 60} dk` : `${route.min} dk`}</span>
                     <span className="rt-num text-[15px] font-semibold text-[#6B7280]">{fmt1(route.km)} km</span>
+                    {routeState === 'loading' && <Loader2 size={16} className="animate-spin self-center text-[#FF8A5B]" />}
                   </div>
                   <p className="mt-1.5 flex items-center gap-1.5 truncate text-[13.5px] text-[#6B7280]">
-                    <Clock size={14} className="shrink-0" />Varış <span className="rt-num font-semibold text-[#1E2022]">{clockPlus(route.min)}</span> • {dest.name}
+                    <Clock size={14} className="shrink-0" />Varış <span className="rt-num font-semibold text-[#1E2022]">{clockPlus(route.min)}</span>{route.via ? ` • ${route.via}` : ''}
                   </p>
                 </div>
                 <button type="button" onClick={() => setSheetOpen((o) => !o)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#F8F6F4] text-[#6B7280]" aria-label="Detaylar">
@@ -2096,8 +2674,18 @@ export default function App() {
                 </button>
               </div>
 
+              <button type="button" onClick={() => setEditor('dest')} className="mt-3 flex w-full items-center gap-2 rounded-2xl bg-[#FAFAFA] px-3 py-2.5 text-left ring-1 ring-[#ECEEF2]">
+                <span className="h-3 w-3 shrink-0 rounded-full border-[3px] border-[#1E2022]" />
+                <span className="min-w-0 max-w-[40%] truncate text-[13.5px] font-semibold text-[#1E2022]">{origin.name}</span>
+                <ArrowRight size={14} className="shrink-0 text-[#9CA3AF]" />
+                <MapPin size={15} className="shrink-0 text-[#FF8A5B]" fill="#FFF1EB" />
+                <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-[#1E2022]">{destination.name}</span>
+                <Pencil size={14} className="shrink-0 text-[#E87344]" />
+              </button>
+
               {sheetOpen && (
                 <div className="rt-fade">
+                  {routeState === 'offline' && <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[#9CA3AF]"><CloudOff size={13} />Rota servisine ulaşılamadı, tahmini rota gösteriliyor.</p>}
                   <div className="rt-noscroll -mx-5 mt-3 flex gap-2 overflow-x-auto px-5">
                     {routes.map((r) => (
                       <button key={r.id} type="button" onClick={() => setSelected(r.id)}
@@ -2110,8 +2698,8 @@ export default function App() {
                   {stop && (
                     <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[#FAFAFA] px-3 py-2 ring-1 ring-[#ECEEF2]">
                       <Flag size={15} className="shrink-0 text-[#FF8A5B]" />
-                      <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-[#1E2022]">Durak: {stop.name} <span className="text-[#6B7280]">(+{stop.detour} dk)</span></p>
-                      <button type="button" onClick={() => { setStop(null); showToast('Durak rotadan kaldırıldı'); }} className="grid h-7 w-7 place-items-center rounded-full text-[#6B7280] hover:bg-white" aria-label="Durağı kaldır"><X size={15} /></button>
+                      <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-[#1E2022]">Durak: {stop.name}{stop.addKm != null && <span className="rt-num text-[#6B7280]"> (+{fmt1(stop.addKm)} km, +{Math.max(1, Math.round(stop.addMin))} dk)</span>}</p>
+                      <button type="button" onClick={clearStop} className="grid h-7 w-7 place-items-center rounded-full text-[#6B7280] hover:bg-white" aria-label="Durağı kaldır"><X size={15} /></button>
                     </div>
                   )}
 
@@ -2144,7 +2732,7 @@ export default function App() {
                 </div>
               )}
 
-              <button type="button" onClick={startNav} className="mt-4 flex h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#FF8A5B] text-[16px] font-bold text-white shadow-[0_8px_24px_rgba(255,138,91,0.35)] transition hover:bg-[#E87344] active:scale-[.99]">
+              <button type="button" onClick={startNav} disabled={routeState === 'loading'} className="mt-4 flex h-[54px] w-full disabled:opacity-60 items-center justify-center gap-2 rounded-2xl bg-[#FF8A5B] text-[16px] font-bold text-white shadow-[0_8px_24px_rgba(255,138,91,0.35)] transition hover:bg-[#E87344] active:scale-[.99]">
                 <Navigation size={19} fill="#fff" />Navigasyonu Başlat
               </button>
             </div>
@@ -2224,15 +2812,15 @@ export default function App() {
       {/* ------------------ DİĞER SEKMELER ------------------ */}
       {tab === 'routes' && !nav && (
         <div className="absolute inset-0 z-20">
-          <RoutesScreen dest={dest} routes={routes} selected={selected} setSelected={setSelected} vehicle={vehicle} stop={stop}
-            onShowMap={() => setTab('map')} onStart={startNav} onAddVehicle={() => setModal('add')}
-            onSwapDest={() => { const k = destKey === 'is' ? 'ev' : 'is'; setDestKey(k); setStop(null); showToast(`Hedef: ${DESTINATIONS[k].name}`, 'ok'); }} />
+          <RoutesScreen origin={origin} destination={destination} routes={routes} selected={selected} setSelected={setSelected} vehicle={vehicle} stop={stop} routeState={routeState}
+            onEdit={(f) => setEditor(f)} onSwap={swapEnds} onClearStop={clearStop}
+            onShowMap={() => setTab('map')} onStart={startNav} onAddVehicle={() => setModal('add')} />
         </div>
       )}
       {tab === 'ai' && !nav && (
         <div className="absolute inset-0 z-20">
           <AIScreen messages={messages} onSend={sendAI} typing={typing} stop={stop} listening={listening} setListening={setListening}
-            onAddStation={() => addStop({ name: 'Opet - Atatürk Bulvarı', detour: 2 })}
+            onAddStation={() => addBestStop('fuel')}
             onApplyEco={() => { setSelected('eco'); setTab('map'); setSheetOpen(true); showToast('Routier Eco rotası çizildi', 'ok'); }} />
         </div>
       )}
@@ -2303,28 +2891,46 @@ export default function App() {
         </Sheet>
       )}
 
-      {poiKey && (
-        <Sheet onClose={() => setModal(null)} title={POIS[poiKey].title}>
-          <div className="space-y-2 pb-2">
-            {POIS[poiKey].items.map((p) => {
-              const I = POIS[poiKey].icon;
-              const added = stop?.name === p.name;
-              return (
-                <div key={p.name} className="flex items-center gap-3 rounded-2xl bg-[#FAFAFA] p-3 ring-1 ring-[#ECEEF2]">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#FFF1EB] text-[#FF8A5B]"><I size={19} /></span>
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1.5 truncate text-[14.5px] font-bold text-[#1E2022]">{p.name}</p>
-                    <p className="rt-num truncate text-[12.5px] text-[#6B7280]">{p.meta} • +{p.detour} dk{p.best && <span className="ml-1 font-bold text-[#10B981]">• En iyi</span>}</p>
-                  </div>
-                  <button type="button" onClick={() => addStop({ name: p.name, detour: p.detour })} disabled={added}
-                    className={`h-9 shrink-0 rounded-full px-3.5 text-[12.5px] font-bold ${added ? 'bg-[#ECFDF5] text-[#10B981]' : 'bg-[#FF8A5B] text-white'}`}>
-                    {added ? 'Eklendi' : 'Rotaya Ekle'}
-                  </button>
-                </div>
-              );
-            })}
+      {modal === 'poi' && poi.kind && (
+        <StopSheet kind={poi.kind} state={poi} stop={stop} onPick={addStop} onClose={() => setModal(null)} onRetry={() => openStops(poi.kind)} />
+      )}
+
+      {modal === 'pick' && pick && (
+        <Sheet onClose={() => setModal(null)} title="Seçilen Nokta">
+          <div className="flex items-center gap-3 rounded-2xl bg-[#FAFAFA] p-3 ring-1 ring-[#ECEEF2]">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#FFF1EB] text-[#FF8A5B]"><MapPin size={20} /></span>
+            <div className="min-w-0 flex-1">
+              {pick.place ? (
+                <>
+                  <p className="truncate text-[15px] font-bold text-[#1E2022]">{pick.place.name}</p>
+                  <p className="truncate text-[12.5px] text-[#6B7280]">{pick.place.sub}</p>
+                </>
+              ) : <p className="flex items-center gap-2 text-[14px] text-[#6B7280]"><Loader2 size={15} className="animate-spin text-[#FF8A5B]" />Adres alınıyor…</p>}
+            </div>
+            <span className="rt-num shrink-0 text-[12.5px] text-[#9CA3AF]">{fmt1(distM(origin.coord, pick.coord) / 1000)} km</span>
+          </div>
+          <div className="mt-4 space-y-2 pb-2">
+            <button type="button" onClick={() => {
+              const pl = pickPlace();
+              if (distM(pl.coord, origin.coord) < 30) { showToast('Başlangıç ve varış aynı olamaz', 'warn'); return; }
+              changeDest(pl); setModal(null); showToast(`Hedef: ${pl.name}`, 'ok');
+            }} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#FF8A5B] text-[15px] font-bold text-white hover:bg-[#E87344]"><Navigation size={18} fill="#fff" />Buraya Git</button>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => {
+                const pl = pickPlace();
+                if (distM(pl.coord, destination.coord) < 30) { showToast('Başlangıç ve varış aynı olamaz', 'warn'); return; }
+                changeOrigin(pl); setModal(null); showToast(`Başlangıç: ${pl.name}`, 'ok');
+              }} className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-[#ECEEF2] text-[14px] font-bold text-[#1E2022]"><span className="h-3 w-3 rounded-full border-[3px] border-[#1E2022]" />Buradan Başla</button>
+              <button type="button" onClick={() => addStop({ ...pickPlace(), kind: 'custom' })} className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-[#FFD8C7] text-[14px] font-bold text-[#E87344]"><Flag size={16} />Durak Ekle</button>
+            </div>
           </div>
         </Sheet>
+      )}
+
+      {editor && !nav && (
+        <RouteEditor origin={origin} destination={destination} stop={stop} home={settings.home || DEMO_HOME} work={settings.work || DEMO_WORK} initialField={editor}
+          onClose={() => setEditor(null)} onSetOrigin={changeOrigin} onSetDest={changeDest} onSwap={swapEnds} onClearStop={clearStop} onSaveSlot={saveSlot} onToast={showToast}
+          onAsk={(q) => { setEditor(null); setTab('ai'); sendAI(q); }} />
       )}
 
       {modal === 'recovery' && (
